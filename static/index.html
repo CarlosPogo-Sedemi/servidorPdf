@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Servidor de Reportes PDF - Consola Local</title>
+    <!-- Fuentes Premium de Google -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Iconos Lucide para estética profesional -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- BARRA LATERAL (SIDEBAR) -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-logo">
+                    <i data-lucide="file-text" class="logo-icon"></i>
+                </div>
+                <div class="brand-text">
+                    <h1>PDF Engine</h1>
+                    <span>CONSOLA LOCAL</span>
+                </div>
+            </div>
+            
+            <nav class="nav-menu">
+                <button class="nav-item active" id="btn-tab-dashboard" onclick="switchTab('dashboard')">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-item" id="btn-tab-generator" onclick="switchTab('generator')">
+                    <i data-lucide="plus-circle"></i>
+                    <span>Crear Reporte Técnico</span>
+                </button>
+            </nav>
+            
+            <div class="server-status">
+                <div class="status-indicator online"></div>
+                <div class="status-text">
+                    <p>Servidor Local</p>
+                    <span>Online (Puerto 8000)</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="main-content">
+            
+            <!-- PESTAÑA 1: DASHBOARD -->
+            <section id="tab-dashboard" class="tab-content active">
+                <header class="content-header">
+                    <div>
+                        <h2>Panel de Control</h2>
+                        <p class="subtitle">Gestiona y visualiza tus informes PDF locales creados por el sistema.</p>
+                    </div>
+                </header>
+
+                <!-- ESTADÍSTICAS RÁPIDAS -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon cyan-theme">
+                            <i data-lucide="files"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="stat-total-files">0</h3>
+                            <p>Reportes Guardados</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon purple-theme">
+                            <i data-lucide="hard-drive"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="stat-storage-size">0 KB</h3>
+                            <p>Espacio en archivos_salida/</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green-theme">
+                            <i data-lucide="check-circle-2"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Activo</h3>
+                            <p>Generación en Tiempo Real</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LISTADO DE REPORTES EXISTENTES -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-title-group">
+                            <i data-lucide="history"></i>
+                            <h3>Historial de Reportes Generados</h3>
+                        </div>
+                        <div class="search-bar">
+                            <i data-lucide="search"></i>
+                            <input type="text" id="search-input" placeholder="Buscar reporte por nombre..." oninput="filtrarReportes()">
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table id="reportes-table">
+                            <thead>
+                                <tr>
+                                    <th>Nombre del Archivo</th>
+                                    <th>Tamaño</th>
+                                    <th>Fecha de Modificación</th>
+                                    <th class="actions-col">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportes-list">
+                                <!-- Se carga dinámicamente mediante JS -->
+                                <tr>
+                                    <td colspan="4" class="empty-state">
+                                        <div class="spinner"></div>
+                                        <p>Cargando lista de archivos...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PESTAÑA 2: NUEVO GENERADOR DE REPORTES TÉCNICOS -->
+            <section id="tab-generator" class="tab-content">
+                <header class="content-header">
+                    <div>
+                        <h2>Generador Técnico Integrado</h2>
+                        <p class="subtitle">Inserta metadatos, carga un plano CAD (DWG/DXF) y fotos de inspección en campo.</p>
+                    </div>
+                </header>
+
+                <div class="workspace-layout">
+                    <!-- COLUMNA IZQUIERDA: FORMULARIO -->
+                    <div class="form-container-card">
+                        <form id="pdf-generator-form" onsubmit="generarReporteTecnico(event)">
+                            
+                            <!-- Sección 1: Metadatos -->
+                            <div class="form-section">
+                                <div class="section-title">
+                                    <span class="step-num">1</span>
+                                    <h4>Metadatos del Proyecto</h4>
+                                </div>
+                                <div class="form-group-row">
+                                    <div class="form-group">
+                                        <label for="titulo">Título Principal <span class="required">*</span></label>
+                                        <input type="text" id="titulo" placeholder="Ej: Reporte Estructural Puente" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="subtitulo">Subtítulo</label>
+                                        <input type="text" id="subtitulo" placeholder="Ej: Fase de Liberación Final">
+                                    </div>
+                                </div>
+                                <div class="form-group-row">
+                                    <div class="form-group">
+                                        <label for="autor">Responsable / Autor <span class="required">*</span></label>
+                                        <input type="text" id="autor" placeholder="Ej: Ing. Carlos Mendoza" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="proyecto">Nombre del Proyecto</label>
+                                        <input type="text" id="proyecto" placeholder="Ej: Obra Civiles Sector Sur">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="descripcion">Descripción General del Trabajo <span class="required">*</span></label>
+                                    <textarea id="descripcion" rows="3" placeholder="Describe los detalles de la inspección, hallazgos o avance general..." required></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Sección 2: Plano CAD -->
+                            <div class="form-section">
+                                <div class="section-title">
+                                    <span class="step-num">2</span>
+                                    <h4>Plano de Ingeniería (CAD)</h4>
+                                </div>
+                                <p class="section-hint">Sube archivos <strong>.dwg</strong> o <strong>.dxf</strong>. Los .dxf se renderizan en vector real; los .dwg muestran un plano "blueprint" premium esquemático.</p>
+                                <div class="drag-drop-zone" id="cad-drop-zone">
+                                    <input type="file" id="cad-file-input" accept=".dwg,.dxf" onchange="handleCadSelect(event)">
+                                    <i data-lucide="milestone" class="drop-icon"></i>
+                                    <p class="drop-text">Arrastra tu plano CAD aquí o <span class="browse-link">selecciona archivo</span></p>
+                                    <span class="file-limits">Soporta .DWG y .DXF</span>
+                                </div>
+                                <div id="cad-preview" class="file-preview-card hidden">
+                                    <div class="preview-info">
+                                        <i data-lucide="file-digit" class="preview-file-icon"></i>
+                                        <div>
+                                            <p class="preview-name" id="cad-name">plano.dwg</p>
+                                            <span class="preview-size" id="cad-size">124 KB</span>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn-remove-file" onclick="clearCadFile()">
+                                        <i data-lucide="x"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Sección 3: Registro de Fotos -->
+                            <div class="form-section">
+                                <div class="section-title">
+                                    <span class="step-num">3</span>
+                                    <h4>Registro de Imágenes de Inspección</h4>
+                                </div>
+                                <p class="section-hint">Selecciona hasta 6 imágenes en formato JPG o PNG para incluirlas en la cuadrícula técnica del PDF.</p>
+                                <div class="drag-drop-zone" id="images-drop-zone">
+                                    <input type="file" id="images-file-input" accept="image/png, image/jpeg, image/jpg" multiple onchange="handleImagesSelect(event)">
+                                    <i data-lucide="images" class="drop-icon"></i>
+                                    <p class="drop-text">Arrastra tus fotos de campo aquí o <span class="browse-link">selecciona archivos</span></p>
+                                    <span class="file-limits">Formatos PNG/JPG (Máx. 6)</span>
+                                </div>
+                                <div id="images-preview-grid" class="images-preview-grid">
+                                    <!-- Se cargan dinámicamente -->
+                                </div>
+                            </div>
+
+                            <!-- Botón de Generación -->
+                            <button type="submit" class="btn-submit-generator" id="btn-generate">
+                                <i data-lucide="file-check"></i>
+                                <span>Generar Reporte PDF</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- COLUMNA DERECHA: PREVISUALIZACIÓN Y GUÍA TÉCNICA -->
+                    <div class="preview-column">
+                        <!-- Panel de Vista Previa del PDF -->
+                        <div class="preview-card glass-panel">
+                            <div class="preview-header">
+                                <div class="preview-title">
+                                    <i data-lucide="eye" class="preview-eye-icon"></i>
+                                    <span>Vista Previa del PDF Generado</span>
+                                </div>
+                                <div id="pdf-actions" class="pdf-actions hidden">
+                                    <a id="btn-download-pdf" href="#" class="btn-download" download>
+                                        <i data-lucide="download"></i>
+                                        <span>Descargar PDF</span>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="pdf-viewer-container" id="viewer-container">
+                                <div class="viewer-placeholder">
+                                    <i data-lucide="file-text"></i>
+                                    <p>Completa el formulario a la izquierda y presiona "Generar Reporte" para ver el PDF aquí en tiempo real.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Panel de Guía Técnica: Cómo se maneja DWG -->
+                        <div class="guide-card glass-panel">
+                            <div class="guide-header" onclick="toggleGuide()">
+                                <div class="guide-title">
+                                    <i data-lucide="terminal" class="guide-icon"></i>
+                                    <span>¿Cómo funciona el procesador de CAD (.dwg / .dxf) en Python?</span>
+                                </div>
+                                <i data-lucide="chevron-down" id="guide-chevron" class="chevron-icon"></i>
+                            </div>
+                            <div class="guide-body hidden" id="guide-body">
+                                <h5>Manejabilidad de CAD en Local</h5>
+                                <p><strong>1. El formato DXF (.dxf) (Abierto):</strong> Es sumamente manejable en Python. Usamos la librería <code>ezdxf</code> para leer directamente la geometría del plano (líneas, círculos, cotas) y <code>matplotlib</code> para renderizar el dibujo vectorial de forma nativa a una imagen y pegarla en el PDF.</p>
+                                <p><strong>2. El formato DWG (.dwg) (Propietario):</strong> Al ser binario y cerrado, no existe librería de código abierto nativa para Python que lo renderice sin licencias comerciales. El estándar recomendado es:</p>
+                                <ul>
+                                    <li><strong>Opción Gratis:</strong> Usar la herramienta CLI gratuita <em>ODA File Converter</em> para automatizar por backend la conversión de DWG a DXF y luego leerlo con <code>ezdxf</code>.</li>
+                                    <li><strong>Opción Directa:</strong> Usar <code>pip install aspose-cad</code> (que incluye soporte directo de lectura para DWG en Python mediante API).</li>
+                                </ul>
+                                <h5>Código fuente de extracción implementado:</h5>
+                                <pre><code>import ezdxf
+from ezdxf.addons.drawing.matplotlib import qsave
+
+# 1. Cargar archivo DXF
+doc = ezdxf.readfile("plano.dxf")
+msp = doc.modelspace()
+
+# 2. Renderizar plano completo a PNG
+qsave(msp, "captura.png")
+
+# 3. Insertar la captura en ReportLab
+canvas.drawImage("captura.png", x, y, width, height)</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL DE PREVISUALIZACIÓN GENERAL -->
+    <div id="pdf-preview-modal" class="modal hidden">
+        <div class="modal-overlay" onclick="closeModal()"></div>
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h3 id="modal-title">Previsualizar Reporte</h3>
+                <button class="btn-close" onclick="closeModal()">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <iframe id="modal-iframe" src="" frameborder="0"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Código Javascript de la Consola -->
+    <script src="/static/app.js"></script>
+</body>
+</html>
