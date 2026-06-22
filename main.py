@@ -20,41 +20,27 @@ class PayloadUniversal(BaseModel):
     data: Dict[str, Any]       # Cualquier estructura JSON libre
 
 def reparar_tags_rotos(documento_docx):
-    """
-    Recorre todos los párrafos del documento (incluidas tablas anidadas),
-    fusiona los runs partidos por el corrector de Word y normaliza
-    la sintaxis especial {%tr ...%} de docxtpl (sin espacio tras {%).
-    """
     def fusionar_parrafo(p):
+        # Une todos los fragmentos (runs) de un párrafo en uno solo
         texto_completo = "".join(run.text for run in p.runs)
-        if "{%" in texto_completo or "{{" in texto_completo:
-            # Normaliza "{% tr" -> "{%tr" (con cualquier cantidad de espacios)
-            texto_corregido = re.sub(r'\{%\s*tr\b', '{%tr', texto_completo)
+        
+        # Corrige posibles errores de Word: {% tr -> {%tr
+        texto_corregido = texto_completo.replace("{% tr", "{%tr").replace("{%  tr", "{%tr")
+        
+        if len(p.runs) > 0:
+            p.runs[0].text = texto_corregido
+            # Vacía el resto de fragmentos para que no dupliquen texto
+            for run in p.runs[1:]:
+                run.text = ""
 
-            if texto_corregido != texto_completo or len(p.runs) > 1:
-                p.runs[0].text = texto_corregido
-                for run in p.runs[1:]:
-                    run.text = ""
-
-    def procesar_parrafos(parrafos):
-        for p in parrafos:
-            fusionar_parrafo(p)
-
-    def procesar_tablas(tablas):
-        for tabla in tablas:
-            for fila in tabla.rows:
-                for celda in fila.cells:
-                    # Primero reparamos párrafos
-                    procesar_parrafos(celda.paragraphs)
-                    # Y luego limpiamos los bordes de la celda por si Word metió ahí el tag
-                    for run in celda.paragraphs[0].runs:
-                         run.text = run.text.replace(" ", "") # Elimina espacios basura en los tags
-                    
-                    # Llamada recursiva para tablas anidadas
-                    procesar_tablas(celda.tables)
-
-    procesar_parrafos(documento_docx.paragraphs)
-    procesar_tablas(documento_docx.tables)
+    # Aplicar a párrafos y tablas
+    for p in documento_docx.paragraphs:
+        fusionar_parrafo(p)
+    for tabla in documento_docx.tables:
+        for fila in tabla.rows:
+            for celda in fila.cells:
+                for p in celda.paragraphs:
+                    fusionar_parrafo(p)
 
 # ==========================================
 # MAGIA: ESCANER AUTOMÁTICO DE IMÁGENES
