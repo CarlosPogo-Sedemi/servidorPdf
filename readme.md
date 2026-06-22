@@ -9,7 +9,3 @@ venv\Scripts\activate
 uvicorn main:app --reload
 
 deactivate
-
-Paso 2: Encender el Túnel Público
-1. Abre una nueva ventana de terminal. Ejecuta el comando de ngrok apuntando al puerto de tu servidor:
-ngrok http 8000
