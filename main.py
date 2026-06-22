@@ -1,232 +1,140 @@
-import os
-import shutil
-from typing import List, Optional
-from datetime import datetime
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
-from fastapi.responses import FileResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
+import base64
+from io import BytesIO
+from typing import Dict, Any
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from docxtpl import DocxTemplate, InlineImage
+from docx.shared import Mm
+from PIL import Image
+import re  # agrégalo arriba del archivo, junto a los otros imports
+from docx import Document  # <-- Fundamental para abrir el Word puro primero
 
-# Importar generadores existentes
-from generadores.reporte_basico import crear_pdf_basico
-from generadores.reporte_fase3 import crear_pdf_fase3
-
-
-app = FastAPI(title="Servidor de Reportes PDF Local")
-
-# Crear directorios si no existen
-os.makedirs("archivos_entrada", exist_ok=True)
-os.makedirs("archivos_salida", exist_ok=True)
-os.makedirs("static", exist_ok=True)
-
-# MODELOS DE DATOS PARA LA FASE 3 / GALVANIZADO
-class Parametro(BaseModel):
-    Value: str
-
-class MetadatosFase3(BaseModel):
-    Acabado: str
-    Cantidad: str
-    Cliente: str
-    CorreoResponsable: str
-    CorreosDestino: str
-    Estado: str
-    FechaRegistro: str
-    Fig: str
-    Kilos: str
-    NombreResponsable: str
-    Orden: str
-    Parametros: List[Parametro]
-    Posicion: str
-    Sector: str
-    UsuarioEmisor: str
-    UsuarioResponsable: str
-
-class ItemChecklist(BaseModel):
-    Descripcion:    str
-    FotoBase64:     Optional[str] = None
-    ID_Item:        int
-    Observaciones:  str
-    Cumple_X:       Optional[str] = ""
-    NoCumple_X:     Optional[str] = ""
-    FechaRevision:  Optional[str] = ""
-    FechaValidacion: Optional[str] = ""
-
-class PayloadFase3(BaseModel):
-    Metadatos: MetadatosFase3
-    ItemsChecklist: List[ItemChecklist]
+app = FastAPI(title="Servidor Universal de Reportes - SEDEMI")
 
 # ==========================================
-# ENDPOINTS (RUTAS NUEVAS Y DE INTERFAZ)
+# MODELO DE ENTRADA GENÉRICO (Igual a tu Next.js)
 # ==========================================
+class PayloadUniversal(BaseModel):
+    template_name: str         # Ej: "reporte_fase3", "for_sei_11"
+    data: Dict[str, Any]       # Cualquier estructura JSON libre
 
-# 1. Servir la Consola Web en la Raíz
-@app.get("/")
-def ruta_raiz():
+def reparar_tags_rotos(documento_docx):
     """
-    Devuelve la pantalla del panel de control web en local de forma directa.
+    Recorre todos los párrafos del documento (incluidas tablas anidadas),
+    fusiona los runs partidos por el corrector de Word y normaliza
+    la sintaxis especial {%tr ...%} de docxtpl (sin espacio tras {%).
     """
-    index_path = os.path.join("static", "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
-    return {"mensaje": "Servidor funcionando. Carga los archivos del frontend en la carpeta static."}
+    def fusionar_parrafo(p):
+        texto_completo = "".join(run.text for run in p.runs)
+        if "{%" in texto_completo or "{{" in texto_completo:
+            # Normaliza "{% tr" -> "{%tr" (con cualquier cantidad de espacios)
+            texto_corregido = re.sub(r'\{%\s*tr\b', '{%tr', texto_completo)
 
-# 2. Listar Reportes del Historial
-@app.get("/api/reportes")
-def listar_reportes():
-    """
-    Obtiene la lista de todos los PDFs generados en la carpeta archivos_salida/
-    """
-    ruta = "archivos_salida"
-    if not os.path.exists(ruta):
-        return []
-    
-    reportes = []
-    for f in os.listdir(ruta):
-        if f.endswith(".pdf"):
-            path_completo = os.path.join(ruta, f)
-            stat = os.stat(path_completo)
-            mtime = datetime.fromtimestamp(stat.st_mtime).strftime("%d/%m/%Y %H:%M:%S")
-            reportes.append({
-                "name": f,
-                "size": stat.st_size,
-                "date": mtime
-            })
-            
-    # Ordenar por fecha de modificación, el más reciente primero
-    reportes.sort(key=lambda x: x["date"], reverse=True)
-    return reportes
+            if texto_corregido != texto_completo or len(p.runs) > 1:
+                p.runs[0].text = texto_corregido
+                for run in p.runs[1:]:
+                    run.text = ""
 
-# 3. Eliminar Reporte del Servidor Local
-@app.delete("/api/reportes/{filename}")
-def eliminar_reporte(filename: str):
-    """
-    Elimina permanentemente un reporte en archivos_salida/
-    """
-    filename_limpio = os.path.basename(filename) # Prevenir vulnerabilidades Path Traversal
-    path_completo = os.path.join("archivos_salida", filename_limpio)
-    
-    if os.path.exists(path_completo):
-        try:
-            os.remove(path_completo)
-            return {"mensaje": "Reporte eliminado exitosamente."}
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"No se pudo eliminar el archivo: {e}")
-            
-    raise HTTPException(status_code=404, detail="El archivo no existe.")
+    def procesar_parrafos(parrafos):
+        for p in parrafos:
+            fusionar_parrafo(p)
 
-# 4. NUEVO ENDPOINT MULTIPART: Generador de Reporte Técnico con CAD e Imágenes
-@app.post("/api/generar-pdf-tecnico/")
-async def generar_pdf_tecnico(
-    titulo: str = Form(...),
-    subtitulo: Optional[str] = Form(None),
-    autor: str = Form(...),
-    descripcion: str = Form(...),
-    cad_file: Optional[UploadFile] = File(None),
-    imagenes: List[UploadFile] = File([])
-):
-    """
-    Carga múltiples imágenes de inspección, un plano CAD (.dwg/.dxf),
-    los guarda temporalmente y genera un reporte técnico PDF completo.
-    """
-    rutas_imagenes = []
-    cad_temporal_path = None
-    cad_filename = None
-    cad_size = 0
-    
-    try:
-        # Guardar archivo CAD de entrada si se subió
-        if cad_file and cad_file.filename:
-            cad_filename = cad_file.filename
-            extension = os.path.splitext(cad_filename)[1].lower()
-            if extension not in [".dwg", ".dxf"]:
-                raise HTTPException(status_code=400, detail="Formato CAD no soportado. Sube un archivo .dwg o .dxf.")
-                
-            cad_temporal_path = os.path.join("archivos_entrada", cad_filename)
-            with open(cad_temporal_path, "wb") as buffer:
-                shutil.copyfileobj(cad_file.file, buffer)
-            
-            # Obtener tamaño
-            cad_size = os.path.getsize(cad_temporal_path)
-
-        # Guardar imágenes de entrada
-        for idx, img in enumerate(imagenes):
-            if img.filename:
-                # Filtrar extensiones válidas de imagen
-                ext = os.path.splitext(img.filename)[1].lower()
-                if ext not in [".png", ".jpg", ".jpeg"]:
-                    continue
-                
-                # Nombre único para la imagen guardada localmente
-                nombre_img = f"inspeccion_{idx}_{datetime.now().strftime('%Y%m%d_%H%M%S')}{ext}"
-                ruta_img = os.path.join("archivos_entrada", nombre_img)
-                
-                with open(ruta_img, "wb") as buffer:
-                    shutil.copyfileobj(img.file, buffer)
+    def procesar_tablas(tablas):
+        for tabla in tablas:
+            for fila in tabla.rows:
+                for celda in fila.cells:
+                    # Primero reparamos párrafos
+                    procesar_parrafos(celda.paragraphs)
+                    # Y luego limpiamos los bordes de la celda por si Word metió ahí el tag
+                    for run in celda.paragraphs[0].runs:
+                         run.text = run.text.replace(" ", "") # Elimina espacios basura en los tags
                     
-                rutas_imagenes.append(ruta_img)
+                    # Llamada recursiva para tablas anidadas
+                    procesar_tablas(celda.tables)
 
-        # Invocar al generador ReportLab
-        ruta_pdf_generado = crear_pdf_dwg_imagenes(
-            titulo=titulo,
-            subtitulo=subtitulo,
-            autor=autor,
-            descripcion=descripcion,
-            imagenes_rutas=rutas_imagenes,
-            cad_filename=cad_filename,
-            cad_size_bytes=cad_size,
-            cad_temporal_path=cad_temporal_path
+    procesar_parrafos(documento_docx.paragraphs)
+    procesar_tablas(documento_docx.tables)
+
+# ==========================================
+# MAGIA: ESCANER AUTOMÁTICO DE IMÁGENES
+# ==========================================
+def procesar_imagenes_rec(sub_contexto, doc):
+    """
+    Recorre recursivamente el JSON buscando cadenas Base64 o claves de imagen
+    y las reemplaza "in-place" por objetos InlineImage listos para el Word.
+    """
+    if isinstance(sub_contexto, dict):
+        for k, v in list(sub_contexto.items()):
+            # Detectar si el valor es una imagen base64 (por su prefijo o contenido)
+            if isinstance(v, str) and ("base64," in v or v.startswith("data:image")):
+                try:
+                    # Limpiar y decodificar base64
+                    foto_str = v.split("base64,")[-1]
+                    img_bytes_raw = base64.b64decode(foto_str)
+
+                    # Procesar con Pillow en RAM para asegurar los DPI
+                    pil_img = Image.open(BytesIO(img_bytes_raw)).convert("RGB")
+                    buffer_corregido = BytesIO()
+                    pil_img.save(buffer_corregido, format="JPEG", dpi=(96, 96))
+                    buffer_corregido.seek(0)
+
+                    # REEMPLAZO: Cambiamos la cadena de texto base64 por el objeto InlineImage
+                    sub_contexto[k] = InlineImage(doc, buffer_corregido, width=Mm(50))
+                except Exception as e:
+                    print(f"No se pudo procesar la imagen automática en la clave '{k}': {e}")
+            else:
+                # Seguir buscando dentro del diccionario
+                procesar_imagenes_rec(v, doc)
+                
+    elif isinstance(sub_contexto, list):
+        for item in sub_contexto:
+            procesar_imagenes_rec(item, doc)
+
+# ==========================================
+# ENDPOINT UNIVERSAL
+# ==========================================
+@app.post("/api/v1/generar-reporte/")
+def generar_reporte_universal(payload: PayloadUniversal):
+    try:
+        ruta_plantilla = f"templates/{payload.template_name}.docx"
+        
+        # 1. CARGAR EL WORD PURO CON PYTHON-DOCX
+        try:
+            doc_puro = Document(ruta_plantilla)
+        except Exception:
+            raise HTTPException(status_code=404, detail=f"La plantilla '{payload.template_name}.docx' no existe.")
+
+        # 2. APLICAR TU FUNCIÓN PARA REPARAR LOS TAGS ROTOS POR WORD
+        reparar_tags_rotos(doc_puro)
+
+        # 3. GUARDAR EL WORD YA REPARADO EN LA MEMORIA RAM
+        buffer_reparado = BytesIO()
+        doc_puro.save(buffer_reparado)
+        buffer_reparado.seek(0) # Rebobinar la memoria
+
+        # 4. AHORA SÍ, INICIAR DOCXTPL CON EL ARCHIVO IMPECABLE
+        doc = DocxTemplate(buffer_reparado)
+
+        # 5. Extraer los datos y ejecutar el escáner de imágenes Base64
+        contexto = payload.data
+        procesar_imagenes_rec(contexto, doc)
+
+        # 6. Renderizar la plantilla
+        doc.render(contexto)
+
+        # 7. Guardar el PDF/Word final en RAM
+        file_stream = BytesIO()
+        doc.save(file_stream)
+        file_stream.seek(0)
+
+        nombre_descarga = f"Reporte_{payload.template_name}.docx"
+        return StreamingResponse(
+            file_stream,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={"Content-Disposition": f'attachment; filename="{nombre_descarga}"'}
         )
-        
-        filename_pdf = os.path.basename(ruta_pdf_generado)
-        return {"mensaje": "Reporte generado con éxito en local.", "filename": filename_pdf}
-        
+
     except Exception as e:
-        # Si ocurre un error, logear y levantar HTTP Exception
-        print(f"Error procesando reporte técnico: {e}")
+        print(f"Error crítico en el servidor: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-# ==========================================
-# RUTAS ANTIGUAS Y COMPATIBILIDAD
-# ==========================================
-
-class DatosInformeBasico(BaseModel):
-    titulo: str
-    autor: str
-    contenido: str
-
-@app.post("/generar-pdf/")
-def generar_pdf(datos: DatosInformeBasico):
-    ruta = crear_pdf_basico(titulo=datos.titulo, autor=datos.autor, contenido=datos.contenido)
-    return {"mensaje": "PDF básico generado", "ruta": ruta}
-
-@app.post("/generar-pdf-fase3/")
-def generar_pdf_fase3_api(payload: PayloadFase3):
-    # La función crear_pdf_fase3 ya te hace el Word maravillosamente
-    ruta_pdf_generado = crear_pdf_fase3(payload)
-    
-    return FileResponse(
-        path=ruta_pdf_generado, 
-        
-        # CAMBIO 1: Dile que es un Word, no un PDF
-        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
-        
-        # CAMBIO 2: Ponle la extensión .docx en lugar de .pdf
-        filename=f"Reporte_Orden_{payload.Metadatos.Orden}.docx"
-    )
-
-# ==========================================
-# MONTAJE DE RECURSOS ESTÁTICOS
-# ==========================================
-
-# 1. Montar archivos_salida en '/static/archivos_salida' para descarga y previsualización local
-app.mount("/static/archivos_salida", StaticFiles(directory="archivos_salida"), name="salidas")
-
-# 2. Montar archivos estáticos del panel visual en '/static'
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-# Montar la carpeta de entrada para que las fotos sean públicas
-app.mount("/archivos_entrada", StaticFiles(directory="archivos_entrada"), name="entradas")
-
-# Las que ya tenías:
-app.mount("/static/archivos_salida", StaticFiles(directory="archivos_salida"), name="salidas")
-app.mount("/static", StaticFiles(directory="static"), name="static")
