@@ -14,4 +14,7 @@ pip install -r requirements.txt
 4. Enciende el servidor FastAPI:
 uvicorn main:app --reload
 fastapi dev main.py
-fastapi run main.py --host 0.0.0.0 --port 7080
+fastapi run main.py --host 0.0.0.0 --port 7052
+
+5. Desactivar entorno
+deactivate
