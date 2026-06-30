@@ -9,8 +9,11 @@ from docx.shared import Mm
 from PIL import Image
 import re
 from docx import Document
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI(title="Servidor Universal de Reportes - SEDEMI")
+
+app.mount("/assets", StaticFiles(directory="assets"), name="assets")
 
 # ==========================================
 # MODELO DE ENTRADA GENÉRICO
