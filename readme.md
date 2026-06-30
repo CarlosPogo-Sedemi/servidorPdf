@@ -15,6 +15,7 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 fastapi dev main.py
 fastapi run main.py --host 0.0.0.0 --port 7052
+uvicorn main:app --reload --host 0.0.0.0 --port 7052
 
 5. Desactivar entorno
 deactivate
