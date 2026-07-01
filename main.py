@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 
 app = FastAPI(title="Servidor Universal de Reportes - SEDEMI")
 
-app.mount("/assets", StaticFiles(directory="assets"), name="assets")
+app.mount("/assets", StaticFiles(directory="assets"), name="assets") 
 
 # ==========================================
 # MODELO DE ENTRADA GENÉRICO
