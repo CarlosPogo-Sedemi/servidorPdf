@@ -66,7 +66,7 @@ def comprimir_fotos(payload: LoteFotos):
                 # 3. Comprimir la calidad
                 buffer_optimizado = BytesIO()
                 # Guardamos como JPEG con calidad al 60% (Suficiente para reportes)
-                img.save(buffer_optimizado, format="JPEG", optimize=True, quality=60)
+                img.save(buffer_optimizado, format="JPEG", optimize=True, quality=70)
                 
                 # 4. Reconstruir el Base64
                 nueva_b64 = f"data:image/jpeg;base64,{base64.b64encode(buffer_optimizado.getvalue()).decode()}"
