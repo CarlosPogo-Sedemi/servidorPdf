@@ -1,6 +1,6 @@
 import base64
 from io import BytesIO
-from typing import Dict, Any
+from typing import Dict, Any, List
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -10,6 +10,7 @@ from PIL import Image
 import re
 from docx import Document
 from fastapi.staticfiles import StaticFiles
+#from typing import List
 
 app = FastAPI(title="Servidor Universal de Reportes - SEDEMI")
 
@@ -20,7 +21,65 @@ app.mount("/assets", StaticFiles(directory="assets"), name="assets")
 # ==========================================
 class PayloadUniversal(BaseModel):
     template_name: str         
-    data: Dict[str, Any]       
+    data: Dict[str, Any]
+
+
+# ==========================================
+# MODELOS PARA COMPRESIÓN DE FOTOS
+# ==========================================
+class FotoItem(BaseModel):
+    NombreArchivo: str
+    NovedadFoto: str
+    SubirNube: bool
+
+class LoteFotos(BaseModel):
+    fotos: List[FotoItem]
+
+
+# ==========================================
+# ENDPOINT DE COMPRESIÓN
+# ==========================================
+@app.post("/api/v1/comprimir-fotos/")
+def comprimir_fotos(payload: LoteFotos):
+    fotos_optimizadas = []
+    
+    for foto in payload.fotos:
+        # Solo procesamos si realmente trae foto y hay que subirla
+        if foto.SubirNube and foto.NovedadFoto:
+            try:
+                # 1. Separar la cabecera (data:image/jpeg;base64,) del contenido
+                if "base64," in foto.NovedadFoto:
+                    b64_data = foto.NovedadFoto.split("base64,")[-1]
+                else:
+                    b64_data = foto.NovedadFoto
+                    
+                img_bytes = base64.b64decode(b64_data)
+                img = Image.open(BytesIO(img_bytes)).convert("RGB")
+                
+                # 2. Redimensionar si es gigante (ancho máximo 800px)
+                max_width = 800
+                if img.width > max_width:
+                    wpercent = (max_width / float(img.width))
+                    hsize = int((float(img.height) * float(wpercent)))
+                    img = img.resize((max_width, hsize), Image.Resampling.LANCZOS)
+                
+                # 3. Comprimir la calidad
+                buffer_optimizado = BytesIO()
+                # Guardamos como JPEG con calidad al 60% (Suficiente para reportes)
+                img.save(buffer_optimizado, format="JPEG", optimize=True, quality=60)
+                
+                # 4. Reconstruir el Base64
+                nueva_b64 = f"data:image/jpeg;base64,{base64.b64encode(buffer_optimizado.getvalue()).decode()}"
+                foto.NovedadFoto = nueva_b64
+                
+            except Exception as e:
+                print(f"Error comprimiendo la foto {foto.NombreArchivo}: {e}")
+                # Si falla, devolvemos la original para no romper el flujo
+                pass 
+                
+        fotos_optimizadas.append(foto)
+        
+    return fotos_optimizadas
 
 # ==========================================
 # REPARACIÓN DE TAGS ROTOS (Con el Escudo)
@@ -124,3 +183,10 @@ def generar_reporte_universal(payload: PayloadUniversal):
     except Exception as e:
         print(f"Error crítico en el servidor: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# ==========================================
+# ENDPOINT PARA MANTENER DESPIERTO (PING)
+# ==========================================
+@app.get("/api/v1/ping/")
+def ping_server():
+    return {"status": "ok", "message": "Servidor de reportes despierto y listo."}
