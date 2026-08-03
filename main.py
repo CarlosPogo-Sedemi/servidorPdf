@@ -150,7 +150,7 @@ def procesar_datos_rec(sub_contexto, doc):
             if sub_contexto[i] is None:
                 sub_contexto[i] = ""
             else:
-                procesar_datos_rec(sub_contexto[i], doc)r
+                procesar_datos_rec(sub_contexto[i], doc)
 
 # ==========================================
 # ENDPOINT UNIVERSAL
