@@ -114,7 +114,7 @@ def reparar_tags_rotos(documento_docx):
 def procesar_datos_rec(sub_contexto, doc):
     if isinstance(sub_contexto, dict):
         for k, v in list(sub_contexto.items()):
-            # 1. Limpiar Nulos (si llega null, se convierte en texto vacío)
+            # 1. Limpiar Nulos 
             if v is None:
                 sub_contexto[k] = ""
             
@@ -129,7 +129,16 @@ def procesar_datos_rec(sub_contexto, doc):
                     pil_img.save(buffer_corregido, format="JPEG", dpi=(96, 96))
                     buffer_corregido.seek(0)
 
-                    sub_contexto[k] = InlineImage(doc, buffer_corregido, width=Mm(50))
+                    # 🚀 AQUÍ ESTÁ EL CAMBIO
+                    if k == "FotoPerfil":
+                        # Le damos 30mm (3cm) de ancho y 40mm (4cm) de alto
+                        # Nota: Si la foto original es muy cuadrada, forzar el alto a 40mm podría deformarla un poco. 
+                        # Si se ve estirada, quítale el parámetro height=Mm(40) y deja que Word calcule el alto solo.
+                        sub_contexto[k] = InlineImage(doc, buffer_corregido, width=Mm(30), height=Mm(40))
+                    else:
+                        # Para el resto de imágenes del servidor (como las de inspección) se mantiene 5cm
+                        sub_contexto[k] = InlineImage(doc, buffer_corregido, width=Mm(50))
+                        
                 except Exception as e:
                     print(f"No se pudo procesar la imagen en '{k}': {e}")
                     sub_contexto[k] = ""
@@ -141,7 +150,7 @@ def procesar_datos_rec(sub_contexto, doc):
             if sub_contexto[i] is None:
                 sub_contexto[i] = ""
             else:
-                procesar_datos_rec(sub_contexto[i], doc)
+                procesar_datos_rec(sub_contexto[i], doc)r
 
 # ==========================================
 # ENDPOINT UNIVERSAL
