@@ -199,3 +199,181 @@ def generar_reporte_universal(payload: PayloadUniversal):
 @app.get("/api/v1/ping/")
 def ping_server():
     return {"status": "ok", "message": "Servidor de reportes despierto y listo."}
+
+
+
+
+# ==========================================
+# MODELOS PARA EL PDF DE VACUNACIÓN
+# ==========================================
+class PacienteInfo(BaseModel):
+    institucion: str = ""
+    ruc: str = ""
+    ciiu: str = ""
+    establecimiento_salud: str = ""
+    historia_clinica: str = ""
+    numero_archivo: str = ""
+    primer_apellido: str = ""
+    segundo_apellido: str = ""
+    primer_nombre: str = ""
+    segundo_nombre: str = ""
+    sexo: str = ""
+    cargo: str = ""
+
+class PayloadVacunacion(BaseModel):
+    paciente: PacienteInfo
+    vacunas: List[Dict[str, Any]] # Aquí recibiremos el array JSON que me mostraste
+
+# ==========================================
+# ENDPOINT PARA PDF DE VACUNACIÓN (HTML a PDF)
+# ==========================================
+@app.post("/api/v1/generar-pdf-vacunas/")
+def generar_pdf_vacunas(payload: PayloadVacunacion):
+    try:
+        html_rows = ""
+        # Recorremos el JSON de vacunas
+        for vac in payload.vacunas:
+            doses = []
+            
+            # Validamos si existe la primera dosis general (La del padre)
+            if vac.get('FechaPrimeraDosis'):
+                doses.append({
+                    'dosis': '1°',
+                    'fecha': vac.get('FechaPrimeraDosis', ''),
+                    'lote': vac.get('lote1', ''),
+                    'responsable': vac.get('Responsable1', ''),
+                    'establecimiento': vac.get('Establecimiento1', ''),
+                    'observacion': vac.get('Observacion1', '')
+                })
+            
+            # Recorremos la Lista de Actividades (Dosis hijas/Refuerzos)
+            for act in vac.get('ListaActividades', []):
+                # Limpiamos el texto "Dosis X" para que solo quede "X°"
+                num_dosis = act.get('NumeroDosis', '')
+                if 'Dosis' in num_dosis:
+                    num_dosis = num_dosis.replace('Dosis ', '') + '°'
+                
+                # Determinamos la fecha a usar
+                fecha = act.get('FechaReal') or act.get('FechaTentativa') or ''
+                
+                doses.append({
+                    'dosis': num_dosis,
+                    'fecha': fecha,
+                    'lote': act.get('Lote', ''),
+                    'responsable': act.get('ResponsableVacuna', ''),
+                    'establecimiento': act.get('Establecimiento', ''),
+                    'observacion': act.get('Observacion', '')
+                })
+            
+            # Si por algún motivo la vacuna no tiene dosis, ponemos una fila vacía
+            if not doses:
+                doses.append({'dosis': '1°', 'fecha': '', 'lote': '', 'responsable': '', 'establecimiento': '', 'observacion': ''})
+
+            rowspan = len(doses)
+            
+            # Generamos las filas de la tabla combinando la primera columna con rowspan
+            for i, dose in enumerate(doses):
+                html_rows += "<tr>\n"
+                if i == 0:
+                    html_rows += f'<td rowspan="{rowspan}" class="vacuna-col">{vac.get("NombreVacuna", "")}</td>\n'
+                
+                html_rows += f'<td>{dose["dosis"]}</td>\n'
+                html_rows += f'<td>{dose["fecha"].replace("-", "/")}</td>\n'
+                html_rows += f'<td>{dose["lote"]}</td>\n'
+                html_rows += f'<td></td>\n' # Columna Esquema Completo vacía para marcar a mano
+                html_rows += f'<td>{dose["responsable"]}</td>\n'
+                html_rows += f'<td>{dose["establecimiento"]}</td>\n'
+                html_rows += f'<td>{dose["observacion"]}</td>\n'
+                html_rows += "</tr>\n"
+
+        # Armamos el HTML completo inyectando los datos del paciente y las filas
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta charset="UTF-8">
+        <style>
+            @page {{ size: A4 landscape; margin: 15mm; background-color: #ffffff; }}
+            body {{ font-family: 'Open Sans', 'Arial', sans-serif; font-size: 10px; margin: 0; padding: 0; }}
+            table {{ width: 100%; border-collapse: collapse; margin-bottom: 2px; }}
+            th, td {{ border: 1px solid #7a8a8f; padding: 6px; text-align: center; vertical-align: middle; }}
+            th {{ background-color: #d9ead3; font-weight: bold; color: #000; }}
+            .section-title {{ 
+                background-color: #ccccff; text-align: left; font-size: 13px; 
+                font-weight: bold; padding: 4px; border: 1px solid #7a8a8f; 
+                border-bottom: none; margin-top: 15px;
+            }}
+            .vacuna-col {{ background-color: #e0ffff; font-weight: normal; }}
+            .blank-row td {{ height: 18px; }}
+        </style>
+        </head>
+        <body>
+        <table>
+            <tr>
+                <th>INSTITUCIÓN DEL SISTEMA O NOMBRE DE LA EMPRESA</th>
+                <th>RUC</th>
+                <th>CIIU</th>
+                <th>ESTABLECIMIENTO DE SALUD</th>
+                <th>NÚMERO DE HISTORIA CLÍNICA</th>
+                <th>NÚMERO DE ARCHIVO</th>
+            </tr>
+            <tr class="blank-row">
+                <td>{payload.paciente.institucion}</td>
+                <td>{payload.paciente.ruc}</td>
+                <td>{payload.paciente.ciiu}</td>
+                <td>{payload.paciente.establecimiento_salud}</td>
+                <td>{payload.paciente.historia_clinica}</td>
+                <td>{payload.paciente.numero_archivo}</td>
+            </tr>
+        </table>
+        <table>
+            <tr>
+                <th>PRIMER APELLIDO</th>
+                <th>SEGUNDO APELLIDO</th>
+                <th>PRIMER NOMBRE</th>
+                <th>SEGUNDO NOMBRE</th>
+                <th>SEXO</th>
+                <th>CARGO / OCUPACIÓN</th>
+            </tr>
+            <tr class="blank-row">
+                <td>{payload.paciente.primer_apellido}</td>
+                <td>{payload.paciente.segundo_apellido}</td>
+                <td>{payload.paciente.primer_nombre}</td>
+                <td>{payload.paciente.segundo_nombre}</td>
+                <td>{payload.paciente.sexo}</td>
+                <td>{payload.paciente.cargo}</td>
+            </tr>
+        </table>
+        <div class="section-title">B. INMUNIZACIONES</div>
+        <table>
+            <tr>
+                <th style="width: 15%;">VACUNAS</th>
+                <th style="width: 5%;">DOSIS</th>
+                <th style="width: 10%;">FECHA<br><span style="font-size:8px; font-weight:normal;">( aaaa / mm / dd )</span></th>
+                <th style="width: 10%;">LOTE</th>
+                <th style="width: 10%;">ESQUEMA<br>COMPLETO<br><span style="font-size:8px; font-weight:normal;">(marcar X)</span></th>
+                <th style="width: 20%;">NOMBRES COMPLETOS DEL<br>RESPONSABLE DE LA<br>VACUNACIÓN</th>
+                <th style="width: 15%;">ESTABLECIMIENTO DE<br>SALUD DONDE SE<br>COLOCÓ LA VACUNA.</th>
+                <th style="width: 15%;">OBSERVACIONES</th>
+            </tr>
+            {html_rows}
+        </table>
+        </body>
+        </html>
+        """
+
+        # Generamos el PDF directamente en memoria
+        pdf_bytes = weasyprint.HTML(string=html_content).write_pdf()
+        
+        file_stream = BytesIO(pdf_bytes)
+        file_stream.seek(0)
+
+        return StreamingResponse(
+            file_stream,
+            media_type="application/pdf",
+            headers={"Content-Disposition": 'attachment; filename="registro_vacunacion.pdf"'}
+        )
+
+    except Exception as e:
+        print(f"Error generando PDF de vacunas: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
