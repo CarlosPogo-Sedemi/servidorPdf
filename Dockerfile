@@ -1,15 +1,15 @@
-# 1. Usamos una imagen oficial de Python ligera
-FROM python:3.11-slim
+FROM python:3.11-slim-bookworm
 
-# 2. Instalamos los motores gráficos que necesita WeasyPrint en el sistema (Ubuntu/Debian)
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libpango-1.0-0 \
     libpangoft2-1.0-0 \
+    libpangocairo-1.0-0 \
     libcairo2 \
     libharfbuzz0b \
     libgdk-pixbuf2.0-0 \
     libffi-dev \
     shared-mime-info \
+    fonts-dejavu \
     && rm -rf /var/lib/apt/lists/*
 
 # 3. Configuramos la carpeta de trabajo
