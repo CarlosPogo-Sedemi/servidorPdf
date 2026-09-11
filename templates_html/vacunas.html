@@ -3,21 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <style>
-    @page { size: A4 landscape; margin: 15mm; }
-    body { font-family: 'Open Sans', 'Arial', sans-serif; font-size: 10px; margin: 0; padding: 0; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 2px; }
-    th, td { border: 1px solid #7a8a8f; padding: 6px; text-align: center; vertical-align: middle; }
-    th { background-color: #d9ead3; font-weight: bold; }
-    .section-title { background-color: #ccccff; text-align: left; font-size: 13px; font-weight: bold; padding: 4px; border: 1px solid #7a8a8f; border-bottom: none; margin-top: 15px; }
-    .vacuna-col { background-color: #e0ffff; }
+    @page { size: A4 landscape; margin: 12mm; }
+    body { font-family: 'Arial', 'Open Sans', sans-serif; font-size: 9px; margin: 0; padding: 0; color: #000; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #000; padding: 3px 4px; text-align: center; vertical-align: middle; }
+    th { background-color: #ccffcc; font-weight: normal; }
+    .section-title { background-color: #ccccff; text-align: left; font-size: 12px; font-weight: bold; padding: 4px; border: 1px solid #000; }
+    .subseccion-title td { text-align: left; font-weight: normal; background-color: #ffffff; }
+    .vacuna-col { background-color: #ccffff; }
+    .nota-pie { font-size: 8px; text-align: left; padding: 4px; }
 </style>
 </head>
 <body>
+
+<div class="section-title">A. DATOS DEL ESTABLECIMIENTO - EMPRESA Y USUARIO</div>
 <table>
     <tr>
-        <th>INSTITUCIÓN DEL SISTEMA O NOMBRE DE LA EMPRESA</th>
-        <th>RUC</th><th>CIIU</th><th>ESTABLECIMIENTO DE SALUD</th>
-        <th>NÚMERO DE HISTORIA CLÍNICA</th><th>NÚMERO DE ARCHIVO</th>
+        <th style="width:30%;">INSTITUCIÓN DEL SISTEMA O NOMBRE DE LA EMPRESA</th>
+        <th style="width:14%;">RUC</th>
+        <th style="width:14%;">CIIU</th>
+        <th style="width:18%;">ESTABLECIMIENTO DE SALUD</th>
+        <th style="width:12%;">NÚMERO DE HISTORIA CLÍNICA</th>
+        <th style="width:12%;">NÚMERO DE ARCHIVO</th>
     </tr>
     <tr>
         <td>{{ paciente.institucion }}</td>
@@ -27,11 +34,13 @@
         <td>{{ paciente.historia_clinica }}</td>
         <td>{{ paciente.numero_archivo }}</td>
     </tr>
-</table>
-<table>
     <tr>
-        <th>PRIMER APELLIDO</th><th>SEGUNDO APELLIDO</th><th>PRIMER NOMBRE</th>
-        <th>SEGUNDO NOMBRE</th><th>SEXO</th><th>CARGO / OCUPACIÓN</th>
+        <th>PRIMER APELLIDO</th>
+        <th>SEGUNDO APELLIDO</th>
+        <th>PRIMER NOMBRE</th>
+        <th>SEGUNDO NOMBRE</th>
+        <th style="width:6%;">SEXO</th>
+        <th>CARGO / OCUPACIÓN</th>
     </tr>
     <tr>
         <td>{{ paciente.primer_apellido }}</td>
@@ -42,32 +51,54 @@
         <td>{{ paciente.cargo }}</td>
     </tr>
 </table>
-<div class="section-title">B. INMUNIZACIONES</div>
+
+<div class="section-title" style="margin-top:6px;">B. INMUNIZACIONES</div>
 <table>
     <tr>
-        <th style="width:15%;">VACUNAS</th>
-        <th style="width:5%;">DOSIS</th>
-        <th style="width:10%;">FECHA<br><span style="font-size:8px;font-weight:normal;">( aaaa/mm/dd )</span></th>
-        <th style="width:10%;">LOTE</th>
-        <th style="width:10%;">ESQUEMA COMPLETO<br><span style="font-size:8px;font-weight:normal;">(marcar X)</span></th>
-        <th style="width:20%;">RESPONSABLE DE LA VACUNACIÓN</th>
-        <th style="width:15%;">ESTABLECIMIENTO</th>
-        <th style="width:15%;">OBSERVACIONES</th>
+        <th style="width:14%;">VACUNAS</th>
+        <th style="width:6%;">DOSIS</th>
+        <th style="width:9%;">FECHA<br><span style="font-size:7px;">( aaaa/mm/dd )</span></th>
+        <th style="width:8%;">LOTE</th>
+        <th style="width:9%;">ESQUEMA COMPLETO<br><span style="font-size:7px;">(marcar X)</span></th>
+        <th style="width:20%;">NOMBRES COMPLETOS DEL RESPONSABLE DE LA VACUNACIÓN</th>
+        <th style="width:18%;">ESTABLECIMIENTO DE SALUD DONDE SE COLOCÓ LA VACUNA</th>
+        <th style="width:16%;">OBSERVACIONES</th>
     </tr>
-    {% for g in grupos %}
+    {% for g in grupos_fijos %}
       {% for d in g.dosis %}
       <tr>
         {% if loop.first %}<td rowspan="{{ g.dosis|length }}" class="vacuna-col">{{ g.nombre }}</td>{% endif %}
         <td>{{ d.dosis }}</td>
         <td>{{ d.fecha }}</td>
         <td>{{ d.lote }}</td>
-        <td></td>
+        <td>{{ d.esquema_completo }}</td>
         <td>{{ d.responsable }}</td>
         <td>{{ d.establecimiento }}</td>
         <td>{{ d.observacion }}</td>
       </tr>
       {% endfor %}
     {% endfor %}
+
+    {% if grupos_dinamicos %}
+    <tr class="subseccion-title">
+        <td colspan="8">INMUNIZACIONES DE ACUERDO AL TIPO DE EMPRESA Y RIESGO</td>
+    </tr>
+    {% for g in grupos_dinamicos %}
+      {% for d in g.dosis %}
+      <tr>
+        {% if loop.first %}<td rowspan="{{ g.dosis|length }}" class="vacuna-col">{{ g.nombre }}</td>{% endif %}
+        <td>{{ d.dosis }}</td>
+        <td>{{ d.fecha }}</td>
+        <td>{{ d.lote }}</td>
+        <td>{{ d.esquema_completo }}</td>
+        <td>{{ d.responsable }}</td>
+        <td>{{ d.establecimiento }}</td>
+        <td>{{ d.observacion }}</td>
+      </tr>
+      {% endfor %}
+    {% endfor %}
+    {% endif %}
 </table>
+<div class="nota-pie">La vacuna contra la Fiebre Amarilla es obligatoria para quien viva o se desplace en la Región Amazónica, su aplicación es hasta los 59 años de edad.</div>
 </body>
 </html>
