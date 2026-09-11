@@ -19,3 +19,11 @@ uvicorn main:app --reload --host 0.0.0.0 --port 7052
 
 5. Desactivar entorno
 deactivate
+
+
+
+
+6. Docker
+docker build -t servidorpdf .
+
+docker run -p 10000:10000 servidorpdf
