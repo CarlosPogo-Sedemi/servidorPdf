@@ -5,6 +5,7 @@ python -m venv .venv
 python3 -m venv .venv
 
 2. Activa el entorno virtual:
+.\.venv\Scripts\activate
 venv\Scripts\activate
 source .venv/bin/activate
 
