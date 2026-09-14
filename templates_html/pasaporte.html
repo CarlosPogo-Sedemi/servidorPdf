@@ -317,7 +317,13 @@
         overflow: hidden;
         background: #fff;
     }
-    .foto-box-abs img { width: 100%; height: 100%; object-fit: cover; }
+    /* position:absolute en vez de dejar que el img participe del flex del
+       contenedor: WeasyPrint tiene bugs conocidos combinando su motor de
+       flexbox con object-fit en el hijo (el img queda con tamano 0 y no
+       pinta nada, aunque en un navegador normal se vea perfecto). Sacarlo
+       del flujo flex evita ese bug; el texto placeholder "Fotografia:" del
+       otro caso condicional sigue centrado por el flex del contenedor. */
+    .foto-box-abs img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
 
     /* ===== Pie de página — medidas EXACTAS extraídas del PDF de diseño:
        la barra negra mide 10.05mm (no 15mm), y la "cinta" roja NO es una
@@ -407,6 +413,50 @@
         font-size: 7pt;
     }
 
+    /* Tabla de Historial Médico (Vacunas + Exámen Médico Ocupacional) —
+       mismo ancho de contenido (84.5mm) que el resto de las páginas.
+       6 columnas fijas: nombre de vacuna + 5 dosis; las filas de 2
+       columnas (label/valor) usan colspan="5" sobre las últimas 5. */
+    table.tabla-historial {
+        position: absolute;
+        left: 9.95mm;
+        top: 24.5mm;
+        width: 84.5mm;
+        border-collapse: collapse;
+        background: #fff;
+        table-layout: fixed;
+    }
+    table.tabla-historial td {
+        border: 0.16pt solid #000;
+        padding: 0.6mm 1mm;
+        font-family: 'Inter', sans-serif;
+        font-weight: 400;
+        font-size: 6pt;
+        text-align: left;
+        vertical-align: middle;
+        overflow: hidden;
+    }
+    table.tabla-historial td.th-seccion {
+        background: var(--sedemi-red);
+        color: #fff;
+        font-weight: 700;
+        font-size: 7pt;
+        text-align: center;
+        padding: 1mm;
+    }
+    table.tabla-historial td.th-sub {
+        background: #EDEDED;
+        font-weight: 700;
+        text-align: center;
+    }
+    table.tabla-historial td.dosis-label {
+        font-style: italic;
+        font-weight: 600;
+        text-align: center;
+    }
+    table.tabla-historial td.dosis-valor { text-align: center; font-size: 5.7pt; white-space: nowrap; }
+    table.tabla-historial td.etiqueta { font-weight: 600; }
+
 </style>
 </head>
 <body>
@@ -477,19 +527,23 @@
    x/y/ancho de la línea).
    ========================================================= #}
 {% set contador.n = contador.n + 1 %}
+{# Desde 'fecha_nacimiento' hasta el final (menos 'direccion'): la etiqueta
+   y la linea gris quedan en su posicion original (lx/linex/linew como el
+   diseño original); solo el TEXTO de la respuesta se corre 'indent_valor'
+   mm a la derecha (ver como se usa mas abajo en valor-abs), para que se
+   note la diferencia entre el titulo y la respuesta sin mover la linea. #}
 {% set campos_dp = [
-    {'key':'compania', 'label':'Compañía:', 'lx':42.92,'ly':23.94, 'linex':42.92,'liney':30.26,'linew':51.39},
     {'key':'nombres_apellidos', 'label':'Nombres y Apellidos:', 'lx':42.92,'ly':35.14, 'linex':42.92,'liney':41.47,'linew':51.52},
     {'key':'identificacion', 'label':'Identificación (Cédula/Pasaporte):', 'lx':42.92,'ly':46.35, 'linex':42.92,'liney':52.69,'linew':51.52},
     {'key':'nacionalidad', 'label':'Nacionalidad:', 'lx':42.92,'ly':57.57, 'linex':42.92,'liney':63.85,'linew':51.52},
-    {'key':'fecha_nacimiento', 'label':'Fecha de nacimiento:', 'lx':9.91,'ly':68.73, 'linex':9.91,'liney':75.02,'linew':84.53},
+    {'key':'fecha_nacimiento', 'label':'Fecha de nacimiento:', 'lx':9.91,'ly':68.73, 'linex':9.91,'liney':75.02,'linew':84.53, 'indent_valor':5},
     {'key':'direccion', 'label':'Dirección domiciliaria (ciudad, barrio, calle y número de domicilio):', 'lx':9.90,'ly':79.89, 'linex':9.90,'liney':86.18,'linew':84.49},
-    {'key':'numero_celular', 'label':'Número de celular:', 'lx':9.92,'ly':91.05, 'linex':32.55,'liney':93.85,'linew':61.89},
-    {'key':'codigo_colaborador', 'label':'Código del Colaborador:', 'lx':9.92,'ly':98.72, 'linex':40.15,'liney':101.52,'linew':54.29},
-    {'key':'cargo', 'label':'Cargo:', 'lx':9.92,'ly':106.39, 'linex':19.27,'liney':109.18,'linew':75.17},
-    {'key':'area', 'label':'Área:', 'lx':9.92,'ly':114.06, 'linex':17.09,'liney':116.85,'linew':77.35},
-    {'key':'tipo_licencia', 'label':'Tipo de licencia de conducir:', 'lx':9.92,'ly':121.73, 'linex':45.16,'liney':124.52,'linew':49.28},
-    {'key':'fecha_caducidad_licencia', 'label':'Fecha de caducidad de licencia de conducir:', 'lx':9.92,'ly':129.4, 'linex':63.42,'liney':132.18,'linew':31.02},
+    {'key':'numero_celular', 'label':'Número de celular:', 'lx':9.92,'ly':91.05, 'linex':32.55,'liney':93.85,'linew':61.89, 'indent_valor':5},
+    {'key':'codigo_colaborador', 'label':'Código del Colaborador:', 'lx':9.92,'ly':98.72, 'linex':40.15,'liney':101.52,'linew':54.29, 'indent_valor':5},
+    {'key':'cargo', 'label':'Cargo:', 'lx':9.92,'ly':106.39, 'linex':19.27,'liney':109.18,'linew':75.17, 'indent_valor':5},
+    {'key':'area', 'label':'Área:', 'lx':9.92,'ly':114.06, 'linex':17.09,'liney':116.85,'linew':77.35, 'indent_valor':5},
+    {'key':'tipo_licencia', 'label':'Tipo de licencia de conducir:', 'lx':9.92,'ly':121.73, 'linex':45.16,'liney':124.52,'linew':49.28, 'indent_valor':5},
+    {'key':'fecha_caducidad_licencia', 'label':'Fecha de caducidad de licencia de conducir:', 'lx':9.92,'ly':129.4, 'linex':63.42,'liney':132.18,'linew':31.02, 'indent_valor':5},
 ] %}
 <div class="pagina">
     {{ cinta_esquina() }}
@@ -507,12 +561,22 @@
         {% endif %}
     </div>
 
+    {# Compañía se maneja aparte del loop generico: el nombre real (p.ej.
+       "SEDEMI SERVICIOS DE MECANICA INDUSTRIAL PASANTES") no entra en una
+       sola linea de 51.39mm a 7pt, asi que aca se permite hasta 2 lineas
+       con letra mas chica en vez de recortarlo (a pedido). #}
+    <div class="campo-abs" style="left:42.92mm; top:23.94mm;">
+        <div class="etiqueta">Compañía:</div>
+    </div>
+    <div class="linea-abs" style="left:42.92mm; top:33.5mm; width:51.39mm;"></div>
+    <div class="valor-abs" style="left:42.92mm; top:27.6mm; width:51.39mm; font-size:{{ datos_personales.compania_size }}pt; line-height:1.2; white-space:normal;">{{ datos_personales.compania }}</div>
+
     {% for c in campos_dp %}
     <div class="campo-abs" style="left:{{ c.lx }}mm; top:{{ c.ly }}mm;">
         <div class="etiqueta">{{ c.label }}</div>
     </div>
     <div class="linea-abs" style="left:{{ c.linex }}mm; top:{{ c.liney }}mm; width:{{ c.linew }}mm;"></div>
-    <div class="valor-abs" style="left:{{ c.linex }}mm; top:{{ c.liney - 3.2 }}mm; width:{{ c.linew }}mm;">{{ datos_personales[c.key] }}</div>
+    <div class="valor-abs" style="left:{{ c.linex + (c.indent_valor or 0) }}mm; top:{{ c.liney - 3.2 }}mm; width:{{ c.linew - (c.indent_valor or 0) }}mm;">{{ datos_personales[c.key] }}</div>
     {% endfor %}
 
     {{ pie(contador.n) }}
@@ -546,11 +610,88 @@
         <div class="etiqueta" style="font-size:8pt;">{{ c.label }}</div>
     </div>
     <div class="linea-abs" style="left:9.95mm; top:{{ c.liney }}mm; width:84.5mm;"></div>
-    <div class="valor-abs" style="left:9.95mm; top:{{ c.liney - 3.3 }}mm; width:84.5mm; font-size:8pt;">{{ info_emergencia[c.key] }}</div>
+    <div class="valor-abs" style="left:14.95mm; top:{{ c.liney - 3.3 }}mm; width:79.5mm; font-size:8pt;">{{ info_emergencia[c.key] }}</div>
     {% endfor %}
 
     <img src="assets/pasaporte/pag3_img1.png" style="position:absolute; left:17.28mm; top:121.63mm; width:10mm; height:9.97mm;">
     <div style="position:absolute; left:29.28mm; top:122.3mm; width:65mm; font-family:'Inter',sans-serif; font-weight:500; font-style:italic; font-size:7pt; line-height:1.32; color:#000;">"En una emergencia, tu información y contactos pueden marcar la diferencia y facilitar que recibas ayuda a tiempo."</div>
+
+    {{ pie(contador.n) }}
+</div>
+
+{# =========================================================
+   Historial Médico — tabla de Vacunas (fechas por dosis, data.VA.*) +
+   Exámen Médico Ocupacional (data.DT.FechaExa..FechaExaCad). Se arma como
+   <table> real (no divs absolutos como el resto de páginas) porque es la
+   forma natural de un grid con celdas fusionadas; alto de cada fila lo
+   resuelve el propio contenido (igual que la tabla de Competencias).
+   ========================================================= #}
+{% set contador.n = contador.n + 1 %}
+<div class="pagina">
+    {{ cinta_esquina() }}
+    <div class="badge-rojo"></div>
+    <div class="badge-numero">4</div>
+    <div class="encabezado">
+        <div class="titulo">Historial Médico</div>
+    </div>
+
+    <table class="tabla-historial">
+        <colgroup>
+            <col style="width:19mm;"><col style="width:13.1mm;"><col style="width:13.1mm;">
+            <col style="width:13.1mm;"><col style="width:13.1mm;"><col style="width:13.1mm;">
+        </colgroup>
+        <tr><td colspan="6" class="th-seccion">DATOS MÉDICOS / OCUPACIONALES</td></tr>
+        <tr>
+            <td rowspan="2" class="th-sub">Vacunas</td>
+            <td colspan="5" class="th-sub">Fecha de inmunización</td>
+        </tr>
+        <tr>
+            <td class="dosis-label">1° dosis</td>
+            <td class="dosis-label">2° dosis</td>
+            <td class="dosis-label">3° dosis</td>
+            <td class="dosis-label">4° dosis</td>
+            <td class="dosis-label">5° dosis</td>
+        </tr>
+        {% for v in historial_medico.vacunas %}
+        <tr>
+            <td class="etiqueta">{{ v.nombre }}</td>
+            {% for d in v.dosis %}
+            <td class="dosis-valor">{{ d }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+        <tr><td colspan="6" class="th-seccion">EXÁMEN MÉDICO OCUPACIONAL</td></tr>
+        <tr>
+            <td class="etiqueta">Fecha:</td>
+            <td colspan="5">{{ historial_medico.examen_fecha }}</td>
+        </tr>
+        <tr>
+            <td class="etiqueta">Lugar y centro médico</td>
+            <td colspan="5">{{ historial_medico.examen_lugar }}</td>
+        </tr>
+        <tr>
+            <td class="etiqueta">Nombre y apellido del médico y código MSP</td>
+            <td colspan="5">{{ historial_medico.examen_medico }}</td>
+        </tr>
+        <tr>
+            <td class="etiqueta">Grupo sanguíneo</td>
+            <td colspan="5">{{ historial_medico.grupo_sanguineo }}</td>
+        </tr>
+        <tr>
+            <td class="etiqueta">Alergías</td>
+            <td colspan="5">{{ historial_medico.alergias }}</td>
+        </tr>
+        <tr>
+            <td class="etiqueta">Aptitud médica</td>
+            <td colspan="2">{{ historial_medico.aptitud }}</td>
+            <td colspan="2" class="etiqueta">Fecha de caducidad</td>
+            <td>{{ historial_medico.aptitud_fecha_caducidad }}</td>
+        </tr>
+        <tr>
+            <td class="etiqueta">Restricciones</td>
+            <td colspan="5">{{ historial_medico.restricciones }}</td>
+        </tr>
+    </table>
 
     {{ pie(contador.n) }}
 </div>
@@ -589,7 +730,7 @@
 <div class="pagina">
     {{ cinta_esquina() }}
     <div class="badge-rojo"></div>
-    <div class="badge-numero">4</div>
+    <div class="badge-numero">5</div>
     <div class="encabezado">
         <div class="titulo">Compromisos SSA</div>
     </div>
@@ -619,7 +760,7 @@
 <div class="pagina">
     {{ cinta_esquina() }}
     <div class="badge-rojo"></div>
-    <div class="badge-numero">5</div>
+    <div class="badge-numero">6</div>
     <div class="encabezado">
         <div class="titulo">Competencias</div>
     </div>
@@ -633,11 +774,11 @@
         </tr>
         <tr>
             <td>NOMBRE DEL CURSO</td>
-            <td colspan="2" class="valor-tc">{{ c.get('nombre_curso', '') }}</td>
+            <td colspan="2" class="valor-tc" style="font-size:{{ c.get('nombre_curso_size', 7) }}pt;">{{ c.get('nombre_curso', '') }}</td>
         </tr>
         <tr>
             <td>NOMBRE DEL INSTRUCTOR</td>
-            <td colspan="2" class="valor-tc">{{ c.get('nombre_instructor', '') }}</td>
+            <td colspan="2" class="valor-tc" style="font-size:{{ c.get('nombre_instructor_size', 7) }}pt;">{{ c.get('nombre_instructor', '') }}</td>
         </tr>
         <tr>
             <td>EXPEDICIÓN</td>
@@ -665,7 +806,7 @@
 <div class="pagina">
     {{ cinta_esquina() }}
     <div class="badge-rojo"></div>
-    <div class="badge-numero">6</div>
+    <div class="badge-numero">7</div>
     <div class="encabezado">
         <div class="titulo">Reconocimientos SSA</div>
     </div>
@@ -674,7 +815,12 @@
 
     {% for r in pagina %}
     {% set ct = 30.36 + loop.index0 * 35.31 %}
-    <div class="tarjeta-abs" style="top:{{ ct }}mm; height:30.39mm;">
+    {# Se agrandó la tarjeta (30.39mm -> 32.5mm) para dar más aire entre
+       Mes/Actividad/Firma sin chocar con la siguiente (el espaciado entre
+       tarjetas es 35.31mm, así que sigue sobrando margen). "Mes" queda
+       centrado porque es una palabra corta y sola (el mes más largo,
+       "DICIEMBRE"/"NOVIEMBRE", no llena el ancho de la caja). #}
+    <div class="tarjeta-abs" style="top:{{ ct }}mm; height:32.5mm;">
         <div class="badge-num" style="left:1.46mm; top:1.84mm; width:3.8mm; height:3.8mm;">{{ loop.index }}</div>
         <img src="assets/pasaporte/pag6_img1.png" style="position:absolute; left:12.85mm; top:1.82mm; width:12.19mm; height:16.32mm;">
         <div class="linea-roja" style="left:6.66mm; top:19.53mm; width:24.5mm;"></div>
@@ -683,17 +829,17 @@
 
         <div class="etiqueta-tc" style="top:9.41mm;">Mes:</div>
         <div class="linea-tc" style="top:14.28mm;"></div>
-        <div class="valor-tc" style="top:11.1mm;">{{ r.get('mes', '') }}</div>
+        <div class="valor-tc" style="top:11.1mm; text-align:center;">{{ r.get('mes', '') }}</div>
 
-        <div class="etiqueta-tc" style="top:16.50mm;">Actividad:</div>
-        <div class="linea-tc" style="top:21.36mm;"></div>
-        <div class="valor-tc" style="top:18.2mm;">{{ r.get('actividad', '') }}</div>
+        <div class="etiqueta-tc" style="top:17.0mm;">Actividad:</div>
+        <div class="linea-tc" style="top:22.86mm;"></div>
+        <div class="valor-tc" style="top:19.7mm; font-size:{{ r.get('actividad_size', 7) }}pt;">{{ r.get('actividad', '') }}</div>
 
-        <div class="etiqueta-tc" style="top:23.59mm;">Firma:</div>
+        <div class="etiqueta-tc" style="top:25.09mm;">Firma:</div>
         {% if r.get('firma_base64') %}
-        <img src="{{ r.get('firma_base64') }}" style="position:absolute; left:40.53mm; top:23.5mm; max-width:38.65mm; max-height:5mm;">
+        <img src="{{ r.get('firma_base64') }}" style="position:absolute; left:40.53mm; top:25.0mm; max-width:38.65mm; max-height:5mm;">
         {% else %}
-        <div class="linea-tc" style="top:28.45mm;"></div>
+        <div class="linea-tc" style="top:29.95mm;"></div>
         {% endif %}
     </div>
     {% endfor %}
@@ -710,7 +856,7 @@
 <div class="pagina">
     {{ cinta_esquina() }}
     <div class="badge-rojo"></div>
-    <div class="badge-numero">6</div>
+    <div class="badge-numero">7</div>
     <div class="encabezado">
         <div class="titulo">Reconocimientos SSA</div>
     </div>
@@ -719,7 +865,11 @@
 
     {% for b in pagina %}
     {% set ct = 30.36 + loop.index0 * 35.51 %}
-    <div class="tarjeta-abs" style="top:{{ ct }}mm; height:29.61mm;">
+    {# Mismo ajuste que en "Empleado Seguro del Mes": tarjeta un poco más
+       alta (29.61mm -> 31.1mm) para separar Acción destacada / Mes / Firma
+       (el espaciado entre tarjetas es 35.51mm, sigue sobrando margen), y
+       "Mes" centrado. #}
+    <div class="tarjeta-abs" style="top:{{ ct }}mm; height:31.1mm;">
         <div class="badge-num" style="left:1.48mm; top:1.79mm; width:3.8mm; height:3.71mm;">{{ loop.index }}</div>
         <img src="assets/pasaporte/pag6_img2.png" style="position:absolute; left:11.37mm; top:1.35mm; width:15.53mm; height:16.26mm;">
         <div class="linea-roja" style="left:6.67mm; top:19.03mm; width:24.5mm;"></div>
@@ -727,18 +877,18 @@
         <div class="intro" style="top:1.84mm;">Reconocemos acciones que contribuyen a un ambiente seguro y saludable.</div>
 
         <div class="etiqueta-tc" style="top:9.15mm;">Acción destacada:</div>
-        <div class="linea-tc" style="top:13.91mm;"></div>
-        <div class="valor-tc" style="top:10.9mm;">{{ b.get('accion_destacada', '') }}</div>
+        <div class="linea-tc" style="top:15.2mm;"></div>
+        <div class="valor-tc" style="top:11.9mm; font-size:{{ b.get('accion_destacada_size', 7) }}pt;">{{ b.get('accion_destacada', '') }}</div>
 
-        <div class="etiqueta-tc" style="top:16.06mm;">Mes:</div>
-        <div class="linea-tc" style="top:20.82mm;"></div>
-        <div class="valor-tc" style="top:17.8mm;">{{ b.get('mes', '') }}</div>
+        <div class="etiqueta-tc" style="top:17.56mm;">Mes:</div>
+        <div class="linea-tc" style="top:22.32mm;"></div>
+        <div class="valor-tc" style="top:19.3mm; text-align:center;">{{ b.get('mes', '') }}</div>
 
-        <div class="etiqueta-tc" style="top:22.96mm;">Firma:</div>
+        <div class="etiqueta-tc" style="top:24.46mm;">Firma:</div>
         {% if b.get('firma_base64') %}
-        <img src="{{ b.get('firma_base64') }}" style="position:absolute; left:40.53mm; top:22.9mm; max-width:38.65mm; max-height:5mm;">
+        <img src="{{ b.get('firma_base64') }}" style="position:absolute; left:40.53mm; top:24.4mm; max-width:38.65mm; max-height:5mm;">
         {% else %}
-        <div class="linea-tc" style="top:27.72mm;"></div>
+        <div class="linea-tc" style="top:29.22mm;"></div>
         {% endif %}
     </div>
     {% endfor %}
@@ -768,7 +918,7 @@
 <div class="pagina">
     {{ cinta_esquina() }}
     <div class="badge-rojo"></div>
-    <div class="badge-numero">7</div>
+    <div class="badge-numero">8</div>
     <div class="encabezado">
         <div class="titulo">Constancia de Entrega</div>
     </div>
@@ -820,7 +970,7 @@
 <div class="pagina">
     {{ cinta_esquina() }}
     <div class="badge-rojo"></div>
-    <div class="badge-numero">8</div>
+    <div class="badge-numero">9</div>
     <div class="encabezado">
         <div class="titulo">Contactos de Emergencia</div>
     </div>
