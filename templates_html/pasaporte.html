@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+    /* Tamaño real de la libreta del Word original: 105mm x 148mm (A6) */
+    @page { size: 105mm 148mm; margin: 0; }
+
+    * { box-sizing: border-box; }
+    body {
+        font-family: 'Arial', 'Helvetica Neue', sans-serif;
+        font-size: 8.5px;
+        color: #111;
+        margin: 0;
+        padding: 0;
+    }
+
+    :root {
+        --sedemi-red: #E90028;
+        --sedemi-red-light: #FCEEF0;
+    }
+
+    .pagina {
+        position: relative;
+        width: 105mm;
+        height: 148mm;
+        overflow: hidden;
+        background: #fff;
+        page-break-after: always;
+    }
+    .pagina:last-child { page-break-after: auto; }
+
+    /* Cinta decorativa superior derecha. Se usa SVG (no clip-path) porque
+       WeasyPrint no soporta clip-path de forma confiable. Se mantiene baja
+       (22mm) para no invadir el contenido de la página. */
+    .cinta-esquina {
+        position: absolute;
+        top: 0; right: 0;
+        width: 26mm; height: 22mm;
+        z-index: 0;
+    }
+    .cinta-esquina polygon { fill: var(--sedemi-red-light); }
+
+    .encabezado {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 3mm;
+        padding: 5mm 5mm 3mm 0;
+    }
+    .encabezado .numero {
+        background: var(--sedemi-red);
+        color: #fff;
+        font-weight: bold;
+        font-size: 20px;
+        line-height: 1;
+        padding: 3mm 5mm;
+        border-radius: 0 3mm 3mm 0;
+    }
+    .encabezado .titulo {
+        font-weight: bold;
+        font-size: 13px;
+        color: #111;
+    }
+    .encabezado .subtitulo {
+        font-size: 8px;
+        margin: 0 5mm 2mm 0;
+        position: relative;
+        z-index: 1;
+    }
+
+    .contenido {
+        position: relative;
+        z-index: 1;
+        padding: 2mm 5mm;
+    }
+
+    /* ===== Pie de página: alterna de lado según la página sea par/impar,
+       igual que en el Word (número y cinta roja a la derecha en impares,
+       a la izquierda en pares). ===== */
+    .pie {
+        position: absolute;
+        left: 0; right: 0; bottom: 0;
+        height: 15mm;
+        background: #000;
+        overflow: hidden;
+    }
+    .pie-cinta {
+        position: absolute;
+        bottom: 0;
+        width: 22mm; height: 28mm;
+    }
+    .pie-cinta polygon { fill: var(--sedemi-red); }
+    .pie.pie-der .pie-cinta { right: 0; }
+    .pie.pie-izq .pie-cinta { left: 0; }
+
+    .pie-numero {
+        position: absolute;
+        bottom: 2mm;
+        color: #fff;
+        font-weight: bold;
+        font-size: 11px;
+    }
+    .pie.pie-der .pie-numero { right: 3mm; }
+    .pie.pie-izq .pie-numero { left: 3mm; }
+
+    .pie-texto {
+        position: absolute;
+        bottom: 2mm;
+        width: calc(100% - 26mm);
+        color: #fff;
+        font-size: 6.5px;
+        font-style: italic;
+        line-height: 1.3;
+    }
+    .pie.pie-der .pie-texto { left: 3mm; text-align: left; }
+    .pie.pie-izq .pie-texto { right: 3mm; text-align: right; }
+
+    .campo { margin-bottom: 2.6mm; }
+    .campo .etiqueta { font-weight: bold; font-size: 8px; }
+    .campo .linea {
+        border-bottom: 0.5px solid #999;
+        min-height: 3mm;
+        font-size: 8px;
+        padding-top: 0.5mm;
+    }
+
+    .foto-box {
+        width: 28mm; height: 34mm;
+        border: 0.5px solid #999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-weight: bold;
+        font-size: 7.5px;
+        color: #444;
+        overflow: hidden;
+        background: #fff;
+    }
+    .foto-box img { width: 100%; height: 100%; object-fit: cover; }
+
+    .fila-datos { display: flex; gap: 4mm; }
+    .fila-datos .col-foto { flex: 0 0 28mm; }
+    .fila-datos .col-campos { flex: 1; }
+
+    table.tabla-simple { width: 100%; border-collapse: collapse; margin-bottom: 2mm; background: #fff; }
+    table.tabla-simple th, table.tabla-simple td {
+        border: 0.5px solid #333;
+        padding: 1mm 1.5mm;
+        font-size: 7.5px;
+        text-align: left;
+    }
+    table.tabla-simple th { font-weight: bold; background: #f2f2f2; }
+
+    /* background:#fff es importante: sin esto, la tarjeta es transparente y
+       deja ver la cinta decorativa de fondo cuando se solapan (bug reportado). */
+    .tarjeta {
+        background: #fff;
+        border: 0.5px solid #ccc;
+        border-radius: 2mm;
+        display: flex;
+        gap: 3mm;
+        padding: 2.5mm;
+        margin-bottom: 2.5mm;
+        position: relative;
+        z-index: 1;
+    }
+    .tarjeta .icono-col {
+        flex: 0 0 20mm;
+        text-align: center;
+    }
+    .tarjeta .icono-col img { width: 14mm; }
+    .tarjeta .icono-col .rotulo {
+        font-weight: bold;
+        font-size: 8px;
+        line-height: 1.1;
+        margin-top: 1mm;
+    }
+    .tarjeta .datos-col { flex: 1; }
+    .tarjeta .datos-col .intro {
+        font-size: 6.5px;
+        margin-bottom: 1mm;
+    }
+</style>
+</head>
+<body>
+
+{% set contador = namespace(n=0) %}
+
+{% macro cinta_esquina() %}
+<svg class="cinta-esquina" viewBox="0 0 100 100" preserveAspectRatio="none">
+    <polygon points="100,0 100,70 55,0"></polygon>
+</svg>
+{% endmacro %}
+
+{% macro pie(n) %}
+{% set lado = 'izq' if n % 2 == 0 else 'der' %}
+<div class="pie pie-{{ lado }}">
+    <svg class="pie-cinta" viewBox="0 0 100 100" preserveAspectRatio="none">
+        {% if lado == 'der' %}
+        <polygon points="100,100 100,0 0,100"></polygon>
+        {% else %}
+        <polygon points="0,100 0,0 100,100"></polygon>
+        {% endif %}
+    </svg>
+    <div class="pie-numero">{{ '%02d' % n }}</div>
+    <div class="pie-texto">"Cada decisión segura protege una vida.<br>En SEDEMI, la seguridad comienza conmigo."</div>
+</div>
+{% endmacro %}
+
+{# =========================================================
+   Datos personales
+   ========================================================= #}
+{% set contador.n = contador.n + 1 %}
+<div class="pagina">
+    {{ cinta_esquina() }}
+    <div class="encabezado">
+        <div class="numero">2</div>
+        <div class="titulo">Datos Personales</div>
+    </div>
+    <div class="contenido">
+        <div class="fila-datos">
+            <div class="col-foto">
+                <div class="foto-box">
+                    {% if datos_personales.foto_base64 %}
+                        <img src="{{ datos_personales.foto_base64 }}">
+                    {% else %}
+                        Fotografía
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-campos">
+                <div class="campo"><div class="etiqueta">Compañía:</div><div class="linea">{{ datos_personales.compania }}</div></div>
+                <div class="campo"><div class="etiqueta">Nombres y Apellidos:</div><div class="linea">{{ datos_personales.nombres_apellidos }}</div></div>
+                <div class="campo"><div class="etiqueta">Identificación (Cédula/Pasaporte):</div><div class="linea">{{ datos_personales.identificacion }}</div></div>
+                <div class="campo"><div class="etiqueta">Nacionalidad:</div><div class="linea">{{ datos_personales.nacionalidad }}</div></div>
+            </div>
+        </div>
+        <div class="campo"><div class="etiqueta">Fecha de nacimiento:</div><div class="linea">{{ datos_personales.fecha_nacimiento }}</div></div>
+        <div class="campo"><div class="etiqueta">Dirección domiciliaria (ciudad, barrio, calle y número de domicilio):</div><div class="linea">{{ datos_personales.direccion }}</div></div>
+        <div class="campo"><div class="etiqueta">Número de celular:</div><div class="linea">{{ datos_personales.numero_celular }}</div></div>
+        <div class="campo"><div class="etiqueta">Código del Colaborador:</div><div class="linea">{{ datos_personales.codigo_colaborador }}</div></div>
+        <div class="campo"><div class="etiqueta">Cargo:</div><div class="linea">{{ datos_personales.cargo }}</div></div>
+        <div class="campo"><div class="etiqueta">Área:</div><div class="linea">{{ datos_personales.area }}</div></div>
+        <div class="campo"><div class="etiqueta">Tipo de licencia de conducir:</div><div class="linea">{{ datos_personales.tipo_licencia }}</div></div>
+        <div class="campo"><div class="etiqueta">Fecha de caducidad de licencia de conducir:</div><div class="linea">{{ datos_personales.fecha_caducidad_licencia }}</div></div>
+    </div>
+    {{ pie(contador.n) }}
+</div>
+
+{# =========================================================
+   Información de emergencia
+   ========================================================= #}
+{% set contador.n = contador.n + 1 %}
+<div class="pagina">
+    {{ cinta_esquina() }}
+    <div class="encabezado">
+        <div class="numero">3</div>
+        <div class="titulo">Información de Emergencia</div>
+    </div>
+    <div class="contenido">
+        <div class="campo"><div class="etiqueta">Tipo de Sangre:</div><div class="linea">{{ info_emergencia.tipo_sangre }}</div></div>
+        <div class="campo"><div class="etiqueta">Enfermedades importantes:</div><div class="linea">{{ info_emergencia.enfermedades }}</div></div>
+        <div class="campo"><div class="etiqueta">Alergias:</div><div class="linea">{{ info_emergencia.alergias }}</div></div>
+        <div class="campo"><div class="etiqueta">Contacto 1:</div><div class="linea">{{ info_emergencia.contacto1_nombre }}</div></div>
+        <div class="campo"><div class="etiqueta">Parentesco:</div><div class="linea">{{ info_emergencia.contacto1_parentesco }}</div></div>
+        <div class="campo"><div class="etiqueta">Número de contacto:</div><div class="linea">{{ info_emergencia.contacto1_numero }}</div></div>
+        <div class="campo"><div class="etiqueta">Contacto 2:</div><div class="linea">{{ info_emergencia.contacto2_nombre }}</div></div>
+        <div class="campo"><div class="etiqueta">Parentesco:</div><div class="linea">{{ info_emergencia.contacto2_parentesco }}</div></div>
+        <div class="campo"><div class="etiqueta">Número de contacto:</div><div class="linea">{{ info_emergencia.contacto2_numero }}</div></div>
+        <div class="tarjeta" style="border:none; margin-top:2mm;">
+            <div class="icono-col" style="flex-basis:14mm;"><img src="assets/pasaporte/pag3_img1.png"></div>
+            <div class="datos-col intro" style="margin-top:2mm;">"En una emergencia, tu información y contactos pueden marcar la diferencia y facilitar que recibas ayuda a tiempo."</div>
+        </div>
+    </div>
+    {{ pie(contador.n) }}
+</div>
+
+{# =========================================================
+   Competencias (Inducción / Capacitación) — SECCIÓN DINÁMICA
+   Tantas páginas como hagan falta, N registros por página.
+   ========================================================= #}
+{% for pagina in paginas_competencias %}
+{% set contador.n = contador.n + 1 %}
+<div class="pagina">
+    {{ cinta_esquina() }}
+    <div class="encabezado">
+        <div class="numero">5</div>
+        <div class="titulo">Competencias</div>
+    </div>
+    <div class="contenido">
+        {% for c in pagina %}
+        <table class="tabla-simple">
+            <tr>
+                <th style="width:50%;">Inducción{% if c.get('tipo') == 'Inducción' %} (X){% endif %}</th>
+                <th style="width:50%;">Capacitación{% if c.get('tipo') == 'Capacitación' %} (X){% endif %}</th>
+            </tr>
+            <tr><td colspan="2"><strong>Nombre del curso:</strong> {{ c.get('nombre_curso', '') }}</td></tr>
+            <tr><td colspan="2"><strong>Nombre del instructor:</strong> {{ c.get('nombre_instructor', '') }}</td></tr>
+            <tr>
+                <td>
+                    <strong>Expedición:</strong> {{ c.get('expedicion', '') }}<br>
+                    <strong>Vencimiento:</strong> {{ c.get('vencimiento', '') }}
+                </td>
+                <td>
+                    <strong>Firma/Sello del instructor:</strong><br>
+                    {% if c.get('firma_sello_base64') %}<img src="{{ c.get('firma_sello_base64') }}" style="max-width:20mm; max-height:10mm;">{% endif %}
+                </td>
+            </tr>
+        </table>
+        {% endfor %}
+    </div>
+    {{ pie(contador.n) }}
+</div>
+{% endfor %}
+
+{# =========================================================
+   Reconocimientos SSA — Empleado seguro del mes — SECCIÓN DINÁMICA
+   ========================================================= #}
+{% for pagina in paginas_reconocimientos %}
+{% set contador.n = contador.n + 1 %}
+<div class="pagina">
+    {{ cinta_esquina() }}
+    <div class="encabezado">
+        <div class="numero">6</div>
+        <div class="titulo">Reconocimientos SSA</div>
+    </div>
+    <div class="encabezado subtitulo">Reconocemos el compromiso con la seguridad.</div>
+    <div class="contenido">
+        {% for r in pagina %}
+        <div class="tarjeta">
+            <div class="icono-col">
+                <img src="assets/pasaporte/pag6_img1.png">
+                <div class="rotulo">EMPLEADO<br>SEGURO DEL MES</div>
+            </div>
+            <div class="datos-col">
+                <div class="intro">Destacamos a quien demuestra compromiso, responsabilidad y cuidado todos los días.</div>
+                <div class="campo"><div class="etiqueta">Mes:</div><div class="linea">{{ r.get('mes', '') }}</div></div>
+                <div class="campo"><div class="etiqueta">Actividad:</div><div class="linea">{{ r.get('actividad', '') }}</div></div>
+                <div class="campo">
+                    <div class="etiqueta">Firma:</div>
+                    {% if r.get('firma_base64') %}<img src="{{ r.get('firma_base64') }}" style="max-width:20mm; max-height:8mm;">{% else %}<div class="linea"></div>{% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {{ pie(contador.n) }}
+</div>
+{% endfor %}
+
+{# =========================================================
+   Buenas prácticas ambientales — SECCIÓN DINÁMICA
+   ========================================================= #}
+{% for pagina in paginas_buenas_practicas %}
+{% set contador.n = contador.n + 1 %}
+<div class="pagina">
+    {{ cinta_esquina() }}
+    <div class="encabezado">
+        <div class="numero">6</div>
+        <div class="titulo">Reconocimientos SSA</div>
+    </div>
+    <div class="encabezado subtitulo">Reconocemos el compromiso con la seguridad.</div>
+    <div class="contenido">
+        {% for b in pagina %}
+        <div class="tarjeta">
+            <div class="icono-col">
+                <img src="assets/pasaporte/pag6_img2.png">
+                <div class="rotulo">BUENAS<br>PRÁCTICAS</div>
+            </div>
+            <div class="datos-col">
+                <div class="intro">Reconocemos acciones que contribuyen a un ambiente seguro y saludable.</div>
+                <div class="campo"><div class="etiqueta">Acción destacada:</div><div class="linea">{{ b.get('accion_destacada', '') }}</div></div>
+                <div class="campo"><div class="etiqueta">Mes:</div><div class="linea">{{ b.get('mes', '') }}</div></div>
+                <div class="campo">
+                    <div class="etiqueta">Firma:</div>
+                    {% if b.get('firma_base64') %}<img src="{{ b.get('firma_base64') }}" style="max-width:20mm; max-height:8mm;">{% else %}<div class="linea"></div>{% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {{ pie(contador.n) }}
+</div>
+{% endfor %}
+
+</body>
+</html>
