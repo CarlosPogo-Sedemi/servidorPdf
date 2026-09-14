@@ -10,31 +10,35 @@ class DatosTrabajador(BaseModel):
     (compania, nombres_apellidos, etc.) se hace en pasaporte_service.py.
     Campos que Power Apps manda pero esta plantilla no usa (Medicamentos,
     SeguroPrivado, datos del examen médico, VA de vacunas, etc.) se ignoran
-    solos gracias a `extra="ignore"` — no hace falta declararlos aquí."""
+    solos gracias a `extra="ignore"` — no hace falta declararlos aquí.
+    Todos son `Optional[str]` (no `str = ""`) porque Power Apps manda `null`
+    cuando un campo queda en blanco (p.ej. Contacto2/Parentesco2 sin
+    diligenciar); pasaporte_service.py ya hace `dt.get(campo) or ""` para
+    cada uno, así que aquí basta con aceptar `None` sin rechazarlo."""
     model_config = ConfigDict(extra="ignore")
 
     FotoPerfil: Optional[str] = None
-    Compania: str = ""
-    NombreCompleto: str = ""
-    Cedula: str = ""
-    Nacionalidad: str = ""
+    Compania: Optional[str] = None
+    NombreCompleto: Optional[str] = None
+    Cedula: Optional[str] = None
+    Nacionalidad: Optional[str] = None
     FechaNacimiento: Optional[str] = None
-    DireccionDomi: str = ""
-    NumeroCelular: str = ""
-    Ekon: str = ""
-    Cargo: str = ""
-    Area: str = ""
-    Licencia: str = ""
+    DireccionDomi: Optional[str] = None
+    NumeroCelular: Optional[str] = None
+    Ekon: Optional[str] = None
+    Cargo: Optional[str] = None
+    Area: Optional[str] = None
+    Licencia: Optional[str] = None
     FechaCadLic: Optional[str] = None
-    Sangre: str = ""
-    Enfermedades: str = ""
-    Alergias: str = ""
-    Contacto: str = ""
-    Parentesco: str = ""
-    NumeroContacto: str = ""
-    Contacto2: str = ""
-    Parentesco2: str = ""
-    NumeroContacto2: str = ""
+    Sangre: Optional[str] = None
+    Enfermedades: Optional[str] = None
+    Alergias: Optional[str] = None
+    Contacto: Optional[str] = None
+    Parentesco: Optional[str] = None
+    NumeroContacto: Optional[str] = None
+    Contacto2: Optional[str] = None
+    Parentesco2: Optional[str] = None
+    NumeroContacto2: Optional[str] = None
 
 
 class RegistroMesActividad(BaseModel):
@@ -44,10 +48,10 @@ class RegistroMesActividad(BaseModel):
     la que venga. `Anio` se recibe pero no se muestra (así se pidió)."""
     model_config = ConfigDict(extra="ignore")
 
-    Mes: str = ""
+    Mes: Optional[str] = None
     Anio: Optional[str] = None
     FechaEmision: Optional[str] = None
-    Actividad: str = ""
+    Actividad: Optional[str] = None
 
 
 class RegistroCompetencia(BaseModel):
@@ -57,8 +61,8 @@ class RegistroCompetencia(BaseModel):
     pasaporte_service.py."""
     model_config = ConfigDict(extra="ignore")
 
-    NombreCertificado: str = ""
-    AutoraEmisora: str = ""
+    NombreCertificado: Optional[str] = None
+    AutoraEmisora: Optional[str] = None
     FechaEmision: Optional[str] = None
     FechaVencimiento: Optional[str] = None
 

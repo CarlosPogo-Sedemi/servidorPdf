@@ -39,7 +39,7 @@ No hay suite de tests, linter ni CI configurados. El contenedor sirve en el puer
 ## Arquitectura
 
 `main.py` es solo un punto de composición: crea la app `FastAPI`, monta `assets/` en `/assets`
-(imágenes de encabezado/pie que usan las plantillas) e incluye tres routers. Todos los endpoints
+(imágenes de encabezado/pie que usan las plantillas) e incluye los routers. Todos los endpoints
 van bajo el prefijo `/api/v1`.
 
 | Capa | Directorio | Rol |
@@ -60,6 +60,12 @@ Endpoints:
 - `POST /api/v1/generar-pdf-vacunas/` (`routers/vacunas.py` → `functions/vacunas_service.py`) —
   produce un PDF de registro de vacunación ecuatoriano (A4 horizontal) desde
   `templates_html/vacunas.html`.
+- `POST /api/v1/generar-pdf-pasaporte/` (`routers/pasaporte.py` → `functions/pasaporte_service.py`) —
+  produce el PDF de "Pasaporte de Seguridad" desde `templates_html/pasaporte.html`. Payload
+  `{ data: { DT, EmpleadoMes, BuenasPracticas, Competencias } }` (ver pipeline PDF Pasaporte
+  más abajo). Nota: los `templates/PASAPORTE_SEGURIDAD*.docx` en `templates/` son versiones
+  previas del intento DOCX para este mismo documento; el pipeline vigente es este de PDF/HTML,
+  no `generar-reporte`.
 - `GET /api/v1/ping/` (`routers/utils.py`) — salud / keep-alive.
 
 ### Pipeline DOCX (la parte delicada)
@@ -84,7 +90,7 @@ El archivo de plantilla se carga dos veces: primero como `Document` plano de `py
 la reparación de tags, luego se reabre desde un buffer en memoria como `DocxTemplate` para el
 renderizado.
 
-### Pipeline PDF
+### Pipeline PDF (vacunas)
 
 `functions/vacunas_service.py` mantiene un `Environment` de Jinja2 a nivel de módulo apuntando a
 `templates_html/`. `construir_filas_vacuna()` aplana el modelo de dominio (primera dosis + una
@@ -92,6 +98,19 @@ lista `ListaActividades` de dosis posteriores) en grupos de filas por vacuna que
 itera. Las fechas se reformatean `-` → `/` aquí, no en la plantilla. Solo el `PacienteInfo` de
 `models/vacunas.py` está tipado; la lista `vacunas` es `Dict[str, Any]` sin tipar, así que el
 acceso a campos en el servicio usa `.get()` con valores por defecto.
+
+### Pipeline PDF (pasaporte de seguridad)
+
+`functions/pasaporte_service.py` recibe el JSON tal como lo arma el botón "Enviar" de Power Apps
+(`models/pasaporte.py`, todos los modelos con `extra="ignore"` para poder tolerar campos que
+Power Apps manda pero esta plantilla no usa, sin tener que tocar el Power Fx). Los nombres de
+campo del payload respetan el PascalCase que ya usa Power Apps (`DT.NombreCompleto`,
+`DT.Cedula`, etc.); la traducción a los nombres internos de la plantilla (`nombres_apellidos`,
+`identificacion`, etc.) ocurre en el servicio, no en el modelo ni en la plantilla. Tres listas
+(`Competencias`, `EmpleadoMes`, `BuenasPracticas`) se reparten en páginas de hasta
+`REGISTROS_POR_PAGINA = 3` vía `_en_grupos()`; una lista vacía produce una página con una
+tarjeta en blanco (no cero páginas), a propósito. Las fechas llegan en ISO y se reformatean con
+`_fecha()` (mismo patrón `-` → `/` que en vacunas).
 
 ## Convenciones
 
