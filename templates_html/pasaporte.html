@@ -7,17 +7,33 @@
     @page { size: 105mm 148mm; margin: 0; }
 
     * { box-sizing: border-box; }
+    /* Fondo blanco explícito: si se abre el .html directamente en un
+       navegador con "modo oscuro forzado" activado, sin esto Chrome pinta
+       de negro html/body por no tener un color declarado (el PDF real de
+       WeasyPrint no se ve afectado por esto, pero así se ve bien en ambos). */
+    html, body { background: #fff; }
+
+    /* Fuente real identificada extrayendo los metadatos del PDF de diseño
+       original (Inter-SemiBold / Inter-Medium / Inter-Bold / Inter Italic
+       Medium). Se empaqueta el archivo en assets/fonts/ para que el
+       resultado sea idéntico sin importar qué fuentes tenga instaladas el
+       servidor donde corre WeasyPrint. */
+    @font-face { font-family: 'Inter'; src: url('assets/fonts/Inter-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; }
+    @font-face { font-family: 'Inter'; src: url('assets/fonts/Inter-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; }
+    @font-face { font-family: 'Inter'; src: url('assets/fonts/Inter-SemiBold.woff2') format('woff2'); font-weight: 600; font-style: normal; }
+    @font-face { font-family: 'Inter'; src: url('assets/fonts/Inter-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; }
+    @font-face { font-family: 'Inter'; src: url('assets/fonts/Inter-MediumItalic.woff2') format('woff2'); font-weight: 500; font-style: italic; }
+
     body {
-        font-family: 'Arial', 'Helvetica Neue', sans-serif;
-        font-size: 8.5px;
-        color: #111;
+        font-family: 'Inter', 'Verdana', sans-serif;
+        font-size: 7pt;
+        color: #000;
         margin: 0;
         padding: 0;
     }
 
     :root {
-        --sedemi-red: #E90028;
-        --sedemi-red-light: #FCEEF0;
+        --sedemi-red: #EA0029;
     }
 
     .pagina {
@@ -30,159 +46,367 @@
     }
     .pagina:last-child { page-break-after: auto; }
 
-    /* Cinta decorativa superior derecha. Se usa SVG (no clip-path) porque
-       WeasyPrint no soporta clip-path de forma confiable. Se mantiene baja
-       (22mm) para no invadir el contenido de la página. */
+    /* Cinta decorativa de la esquina superior derecha: path vectorial EXACTO
+       extraído del PDF de diseño original (get_drawings()), no una
+       aproximación. Rojo al 7.66% de opacidad, igual que en el original. */
     .cinta-esquina {
         position: absolute;
         top: 0; right: 0;
-        width: 26mm; height: 22mm;
+        width: 18.94mm; height: 22.78mm;
         z-index: 0;
     }
-    .cinta-esquina polygon { fill: var(--sedemi-red-light); }
 
+    /* Medidas exactas extraídas del PDF (path vectorial del badge vía
+       get_drawings): rect rojo left:0 top:9.91mm 19.93x10.0mm. Esquina
+       recta/en punta arriba-derecha, SOLO la esquina inferior-derecha es
+       redondeada (radio elíptico 3.24mm x 1.45mm) — no las 2 de la derecha
+       como en un botón normal. El "2" y el título van con left/top exactos
+       (no centrados con flexbox: en el original el "2" no está centrado
+       en la caja, está corrido hacia la derecha). */
+    .badge-rojo {
+        position: absolute;
+        left: 0; top: 9.91mm;
+        width: 19.93mm; height: 10mm;
+        background: var(--sedemi-red);
+        border-radius: 0 0 3.24mm 0;
+        z-index: 1;
+    }
+    /* top:50% del alto del badge (9.91+10/2=14.91mm) + translateY(-50%)
+       para centrar verticalmente de forma exacta sin depender de la
+       métrica de línea de la fuente (más confiable que adivinar un "top"
+       fijo, que varía un poco entre el navegador y WeasyPrint). */
+    .badge-numero {
+        position: absolute;
+        left: 12.56mm; top: 14.91mm;
+        transform: translateY(-50%);
+        color: #fff;
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        font-size: 22.5pt;
+        line-height: 1;
+        z-index: 2;
+    }
     .encabezado {
         position: relative;
         z-index: 1;
-        display: flex;
-        align-items: center;
-        gap: 3mm;
-        padding: 5mm 5mm 3mm 0;
-    }
-    .encabezado .numero {
-        background: var(--sedemi-red);
-        color: #fff;
-        font-weight: bold;
-        font-size: 20px;
-        line-height: 1;
-        padding: 3mm 5mm;
-        border-radius: 0 3mm 3mm 0;
     }
     .encabezado .titulo {
-        font-weight: bold;
-        font-size: 13px;
-        color: #111;
+        position: absolute;
+        left: 22.36mm; top: 14.91mm;
+        transform: translateY(-50%);
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        font-size: 15pt;
+        color: #000;
+        white-space: nowrap;
     }
-    .encabezado .subtitulo {
-        font-size: 8px;
-        margin: 0 5mm 2mm 0;
-        position: relative;
+    /* El PDF usa ArialMT (no Inter) para esta línea puntual — se replica
+       tal cual con el mismo peso/tamaño (10pt regular). */
+    .subtitulo {
+        position: absolute;
+        left: 11.53mm; top: 23.11mm;
+        font-family: Arial, 'Inter', sans-serif;
+        font-weight: 400;
+        font-size: 10pt;
+        color: #000;
         z-index: 1;
+    }
+    /* Barra roja antes del subtítulo — faltaba, es una forma rellena, no
+       texto. */
+    .subtitulo-barra {
+        position: absolute;
+        left: 9.92mm; top: 22.42mm;
+        width: 0.71mm; height: 5.06mm;
+        background: var(--sedemi-red);
+        z-index: 1;
+    }
+
+    /* ===== Tarjetas de Reconocimientos / Buenas Prácticas — coordenadas
+       EXACTAS del PDF, relativas al top de cada tarjeta (se repite 3x por
+       página con un desplazamiento vertical fijo). ===== */
+    .tarjeta-abs {
+        position: absolute;
+        left: 9.96mm; width: 84.54mm;
+        border: 0.35mm solid #BBC6C3;
+        border-radius: 1.46mm;
+        background: #fff;
+        overflow: hidden;
+    }
+    .tarjeta-abs .badge-num {
+        position: absolute;
+        background: var(--sedemi-red);
+        color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Inter', sans-serif; font-weight: 700; font-size: 7.5pt;
+    }
+    .tarjeta-abs .linea-roja { position: absolute; height: 0.61mm; background: var(--sedemi-red); }
+    /* left es relativo a .tarjeta-abs (que ya está a 9.96mm de la página) —
+       por eso aquí se resta 9.96mm a cada coordenada absoluta extraída del
+       PDF. Ese descuido (dejarlas absolutas) era el bug: todo el contenido
+       de la derecha se corría 9.96mm de más y se salía del recuadro. */
+    .tarjeta-abs .titulo-icono {
+        position: absolute; left: 3.47mm; width: 32mm;
+        font-family: 'Inter', sans-serif; font-weight: 700; font-size: 10pt;
+        color: #000; text-align: center; line-height: 1.15;
+    }
+    .tarjeta-abs .intro {
+        position: absolute; left: 36.65mm; width: 46mm;
+        font-family: 'Inter', sans-serif; font-weight: 500; font-size: 6pt;
+        color: #000; line-height: 1.28; text-align: center;
+    }
+    .tarjeta-abs .etiqueta-tc {
+        position: absolute; left: 40.53mm;
+        font-family: 'Inter', sans-serif; font-weight: 600; font-size: 7pt;
+        color: #000;
+    }
+    .tarjeta-abs .linea-tc { position: absolute; left: 40.53mm; width: 38.65mm; border-bottom: 0.16pt solid #000; }
+    .tarjeta-abs .valor-tc {
+        position: absolute; left: 40.53mm; width: 38.65mm;
+        font-family: 'Inter', sans-serif; font-weight: 400; font-size: 7pt;
+        color: #000; white-space: nowrap; overflow: hidden;
+    }
+
+    /* ===== Tarjetas de "Compromisos SSA" (Reglas de Oro) — grid 2x3
+       exacto del PDF (37.19 x 30.39mm por tarjeta). El texto (título +
+       descripción) fluye en vez de posicionarse línea por línea, porque
+       en el original la descripción simplemente continúa debajo del
+       título sea cual sea su alto — así se comporta igual sin importar
+       cuánto texto tenga cada regla. ===== */
+    .regla-card {
+        position: absolute;
+        width: 37.19mm; height: 30.39mm;
+        border: 0.35mm solid #BBC6C3;
+        border-radius: 1.46mm;
+        background: #fff;
+        overflow: hidden;
+    }
+    .regla-card .badge-num {
+        position: absolute; left: 2.51mm; top: 1.69mm;
+        width: 3.81mm; height: 3.81mm;
+        background: var(--sedemi-red); color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Inter', sans-serif; font-weight: 700; font-size: 6pt;
+    }
+    .regla-card .regla-icono {
+        position: absolute; left: 0; top: 3.5mm; width: 100%; height: 13.5mm;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .regla-card .regla-icono img { max-width: 26mm; max-height: 13.5mm; }
+    .regla-card .regla-texto {
+        position: absolute; left: 1.5mm; right: 1.5mm; top: 17.3mm;
+        text-align: center;
+    }
+    .regla-card .regla-titulo {
+        font-family: 'Inter', sans-serif; font-weight: 700; font-size: 5pt;
+        color: var(--sedemi-red); line-height: 1.2;
+    }
+    .regla-card .regla-desc {
+        font-family: 'Inter', sans-serif; font-weight: 400; font-size: 5pt;
+        color: #000; line-height: 1.2; margin-top: 0.6mm;
+    }
+
+    /* ===== Tarjetas de Contactos de Emergencia — coordenadas exactas del
+       PDF (61.04mm de ancho, 14.18mm de alto, izquierda a 21.71mm). ===== */
+    .contacto-card {
+        position: absolute;
+        left: 21.71mm; width: 61.04mm; height: 14.18mm;
+        border: 0.35mm solid #BBC6C3;
+        border-radius: 0.68mm;
+        background: #fff;
+        overflow: hidden;
+    }
+    /* Radio EXACTO del path vectorial del PDF: solo 2 esquinas opuestas
+       redondeadas (arriba-izq. y abajo-der.), 1.12mm — no un cuadrado. */
+    .contacto-card .badge-num {
+        position: absolute; left: 1.46mm; top: 1.83mm;
+        width: 3.8mm; height: 3.8mm;
+        background: var(--sedemi-red); color: #fff;
+        border-radius: 1.12mm 0 1.12mm 0;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Inter', sans-serif; font-weight: 700; font-size: 6pt;
+    }
+    .contacto-card .contacto-icono {
+        position: absolute; left: 5mm; top: 0; width: 16mm; height: 14.18mm;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .contacto-card .contacto-icono img { max-width: 13mm; max-height: 10mm; }
+    .contacto-card .contacto-divisor {
+        position: absolute; left: 19.9mm; top: 3.35mm; width: 0.68mm; height: 7.48mm;
+        background: var(--sedemi-red);
+    }
+    /* Nombre y teléfono van en flujo normal (no con "top" fijo): en el PDF
+       el teléfono arranca justo debajo del nombre, sea de 1 o 2 líneas —
+       con una posición fija se veía "desnivelado" entre tarjetas cortas y
+       largas. font-size 8pt porque el PDF lo usa así para los nombres de
+       2 líneas ("Responsabilidad Social", "Técnico de Seguridad Industrial"). */
+    .contacto-card .contacto-textos {
+        position: absolute; left: 25.8mm; top: 1.8mm; right: 2mm;
+    }
+    .contacto-card .contacto-nombre {
+        font-family: 'Inter', sans-serif; font-weight: 800; font-size: 8pt;
+        color: #000; line-height: 1.15;
+    }
+    .contacto-card .contacto-tel-fila {
+        display: flex; align-items: center; gap: 1.3mm; margin-top: 1.2mm;
+    }
+    .contacto-card .contacto-tel-icono { width: 4.15mm; height: 4.15mm; }
+    .contacto-card .contacto-telefono {
+        font-family: 'Inter', sans-serif; font-weight: 600; font-size: 8pt;
+        color: #000;
+    }
+
+    /* Tarjeta roja destacada al pie de Contactos de Emergencia — radio de
+       esquina EXACTO del PDF (0.66mm, no 1.46mm) e interlineado ajustado
+       (estaba demasiado espaciado). */
+    .contacto-destacado {
+        position: absolute; left: 21.54mm; top: 119.49mm;
+        width: 61.38mm; height: 13.7mm;
+        background: var(--sedemi-red);
+        border-radius: 0.66mm;
+        overflow: hidden;
+    }
+    /* Franja blanca — trazado EXACTO del PDF (no un rombo/zigzag inventado):
+       una sola diagonal con puntas redondeadas, centrada verticalmente con
+       2.25mm de margen arriba/abajo dentro de la tarjeta. */
+    .contacto-destacado-swoosh { position: absolute; left: 2.5mm; top: 2.25mm; width: 7.65mm; height: 9.2mm; }
+    .contacto-destacado-texto {
+        position: absolute; left: 13mm; top: 2.7mm; right: 2mm;
+        font-family: 'Inter', sans-serif; font-weight: 500; font-size: 6pt;
+        color: #fff; line-height: 1.15;
     }
 
     .contenido {
         position: relative;
         z-index: 1;
-        padding: 2mm 5mm;
+        padding: 5mm 9mm 4mm 9mm;
     }
 
-    /* ===== Pie de página: alterna de lado según la página sea par/impar,
-       igual que en el Word (número y cinta roja a la derecha en impares,
-       a la izquierda en pares). ===== */
+    /* ===== Campos con posición absoluta EXACTA (mm), tal como en el PDF
+       de diseño original — usado en Datos Personales. `top`/`left` vienen
+       de las coordenadas reales de texto/líneas extraídas del PDF, no de
+       una estimación. ===== */
+    .campo-abs { position: absolute; }
+    .campo-abs .etiqueta {
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        font-size: 7pt;
+        color: #000;
+        white-space: nowrap;
+    }
+    .linea-abs {
+        position: absolute;
+        border-bottom: 0.75pt solid #BBC6C3;
+    }
+    .valor-abs {
+        position: absolute;
+        font-family: 'Inter', sans-serif;
+        font-weight: 400;
+        font-size: 7pt;
+        color: #000;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+    .foto-box-abs {
+        position: absolute;
+        left: 9.92mm; top: 24.38mm;
+        width: 30mm; height: 39.95mm;
+        border: 0.75pt solid #BBC6C3;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        background: #fff;
+    }
+    .foto-box-abs img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* ===== Pie de página — medidas EXACTAS extraídas del PDF de diseño:
+       la barra negra mide 10.05mm (no 15mm), y la "cinta" roja NO es una
+       forma CSS: es la imagen PNG con transparencia real que ya traía tu
+       PDF (la extraje del propio archivo, píxel por píxel), que además
+       sube 12.7mm POR ENCIMA de la barra negra hacia el contenido — por
+       eso el contenedor .pie mide 35.83mm de alto aunque la parte negra
+       visible sea de solo 10.05mm. Alterna de lado según la página sea
+       par/impar, igual que en el original. ===== */
     .pie {
         position: absolute;
         left: 0; right: 0; bottom: 0;
-        height: 15mm;
+        height: 35.83mm;
+        pointer-events: none;
+    }
+    .pie-negro {
+        position: absolute;
+        left: 0; right: 0; bottom: 0;
+        height: 10.05mm;
         background: #000;
-        overflow: hidden;
+        z-index: 0;
     }
     .pie-cinta {
         position: absolute;
         bottom: 0;
-        width: 22mm; height: 28mm;
+        width: 24.49mm; height: 35.83mm;
+        z-index: 1;
     }
-    .pie-cinta polygon { fill: var(--sedemi-red); }
     .pie.pie-der .pie-cinta { right: 0; }
     .pie.pie-izq .pie-cinta { left: 0; }
 
+    /* Posición EXACTA extraída del PDF (página impar/"der"): número "01" en
+       left:95.95mm top:141.1mm; texto en left:9.92mm top:139.94mm. Para
+       "izq" se refleja usando el mismo margen de 9.92mm/8.52mm desde el
+       borde opuesto, ya que el PDF no trae una página par de ejemplo. */
     .pie-numero {
         position: absolute;
-        bottom: 2mm;
+        top: 28.9mm;
         color: #fff;
-        font-weight: bold;
-        font-size: 11px;
+        font-family: 'Inter', sans-serif;
+        font-weight: 700;
+        font-size: 9pt;
+        z-index: 2;
     }
-    .pie.pie-der .pie-numero { right: 3mm; }
-    .pie.pie-izq .pie-numero { left: 3mm; }
+    .pie.pie-der .pie-numero { left: 95.95mm; }
+    .pie.pie-izq .pie-numero { left: 4.78mm; }
 
     .pie-texto {
         position: absolute;
-        bottom: 2mm;
-        width: calc(100% - 26mm);
+        top: 27.74mm;
+        width: 70mm;
         color: #fff;
-        font-size: 6.5px;
+        font-family: 'Inter', sans-serif;
+        font-weight: 500;
         font-style: italic;
+        font-size: 7pt;
         line-height: 1.3;
+        z-index: 2;
     }
-    .pie.pie-der .pie-texto { left: 3mm; text-align: left; }
-    .pie.pie-izq .pie-texto { right: 3mm; text-align: right; }
+    .pie.pie-der .pie-texto { left: 9.92mm; text-align: left; }
+    .pie.pie-izq .pie-texto { right: 9.92mm; text-align: right; }
 
-    .campo { margin-bottom: 2.6mm; }
-    .campo .etiqueta { font-weight: bold; font-size: 8px; }
-    .campo .linea {
-        border-bottom: 0.5px solid #999;
-        min-height: 3mm;
-        font-size: 8px;
-        padding-top: 0.5mm;
-    }
-
-    .foto-box {
-        width: 28mm; height: 34mm;
-        border: 0.5px solid #999;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        font-weight: bold;
-        font-size: 7.5px;
-        color: #444;
-        overflow: hidden;
+    /* Tabla de Competencias — grid EXACTO extraído del PDF (get_drawings):
+       84.54mm de ancho, 3 columnas (21.13/21.14/42.27mm), filas de ~6.8mm.
+       Se repite hasta 3 veces por página (bt = top de cada tarjeta). */
+    table.tabla-competencia {
+        position: absolute;
+        left: 9.96mm;
+        width: 84.54mm;
+        border-collapse: collapse;
         background: #fff;
+        table-layout: fixed;
     }
-    .foto-box img { width: 100%; height: 100%; object-fit: cover; }
-
-    .fila-datos { display: flex; gap: 4mm; }
-    .fila-datos .col-foto { flex: 0 0 28mm; }
-    .fila-datos .col-campos { flex: 1; }
-
-    table.tabla-simple { width: 100%; border-collapse: collapse; margin-bottom: 2mm; background: #fff; }
-    table.tabla-simple th, table.tabla-simple td {
-        border: 0.5px solid #333;
-        padding: 1mm 1.5mm;
-        font-size: 7.5px;
+    table.tabla-competencia td {
+        border: 0.16pt solid #000;
+        height: 6.8mm;
+        padding: 0.8mm 1mm;
+        font-family: 'Inter', sans-serif;
+        font-weight: 700;
+        font-size: 6pt;
         text-align: left;
+        vertical-align: top;
+        overflow: hidden;
     }
-    table.tabla-simple th { font-weight: bold; background: #f2f2f2; }
+    table.tabla-competencia td.valor-tc {
+        font-weight: 400;
+        font-size: 7pt;
+    }
 
-    /* background:#fff es importante: sin esto, la tarjeta es transparente y
-       deja ver la cinta decorativa de fondo cuando se solapan (bug reportado). */
-    .tarjeta {
-        background: #fff;
-        border: 0.5px solid #ccc;
-        border-radius: 2mm;
-        display: flex;
-        gap: 3mm;
-        padding: 2.5mm;
-        margin-bottom: 2.5mm;
-        position: relative;
-        z-index: 1;
-    }
-    .tarjeta .icono-col {
-        flex: 0 0 20mm;
-        text-align: center;
-    }
-    .tarjeta .icono-col img { width: 14mm; }
-    .tarjeta .icono-col .rotulo {
-        font-weight: bold;
-        font-size: 8px;
-        line-height: 1.1;
-        margin-top: 1mm;
-    }
-    .tarjeta .datos-col { flex: 1; }
-    .tarjeta .datos-col .intro {
-        font-size: 6.5px;
-        margin-bottom: 1mm;
-    }
 </style>
 </head>
 <body>
@@ -190,63 +414,107 @@
 {% set contador = namespace(n=0) %}
 
 {% macro cinta_esquina() %}
-<svg class="cinta-esquina" viewBox="0 0 100 100" preserveAspectRatio="none">
-    <polygon points="100,0 100,70 55,0"></polygon>
+<svg class="cinta-esquina" viewBox="0 0 18.94 22.78">
+    <path d="M18.93,0 L16.57,0 C12.93,0 9.616,2.111 8.08,5.413 L0,22.78 L2.333,22.78 C5.973,22.78 9.286,20.67 10.825,17.37 L18.93,0 Z" fill="#EA0029" fill-opacity="0.0766"></path>
 </svg>
 {% endmacro %}
 
 {% macro pie(n) %}
 {% set lado = 'izq' if n % 2 == 0 else 'der' %}
 <div class="pie pie-{{ lado }}">
-    <svg class="pie-cinta" viewBox="0 0 100 100" preserveAspectRatio="none">
-        {% if lado == 'der' %}
-        <polygon points="100,100 100,0 0,100"></polygon>
-        {% else %}
-        <polygon points="0,100 0,0 100,100"></polygon>
-        {% endif %}
-    </svg>
+    <div class="pie-negro"></div>
+    <img class="pie-cinta" src="assets/pasaporte/pie_cinta_{{ lado }}.png">
     <div class="pie-numero">{{ '%02d' % n }}</div>
     <div class="pie-texto">"Cada decisión segura protege una vida.<br>En SEDEMI, la seguridad comienza conmigo."</div>
 </div>
 {% endmacro %}
 
 {# =========================================================
-   Datos personales
+   Portada — 100% arte gráfico sin datos dinámicos (curvas orgánicas, logo
+   SSA compuesto de ~30 formas vectoriales, texto convertido a trazos).
+   Se exportó la página completa como imagen de alta resolución (300dpi)
+   directamente del PDF de diseño: más simple y más fiel que tratar de
+   reconstruir el logo a mano, y como esta página no lleva campos no hay
+   ninguna pérdida de "dinamismo". NO pasa por el contador de páginas (el
+   PDF original tampoco la numera). ========================================================= #}
+<div class="pagina">
+    <img src="assets/pasaporte/pag1_portada.png" style="position:absolute; inset:0; width:105mm; height:148mm; object-fit:cover;">
+</div>
+
+{# =========================================================
+   Bienvenida — usa el mismo badge/título/cinta que el resto, pero el pie
+   de página en esta página es una variante SIN número y SIN cinta roja,
+   con el texto centrado (así viene en el PDF: sin drawing de imagen en el
+   pie, y el texto centrado en vez de alineado a un lado). Por eso NO
+   incrementa el contador — el PDF tampoco la numera; "Datos Personales"
+   es la página "01".
    ========================================================= #}
-{% set contador.n = contador.n + 1 %}
 <div class="pagina">
     {{ cinta_esquina() }}
+    <div class="badge-rojo"></div>
+    <div class="badge-numero">1</div>
     <div class="encabezado">
-        <div class="numero">2</div>
+        <div class="titulo">Bienvenida</div>
+    </div>
+
+    <div style="position:absolute; left:9.71mm; top:53.72mm; font-family:'Inter',sans-serif; font-weight:700; font-size:11.93pt; color:#FF0000;">MISIÓN DE SEGURIDAD:</div>
+    <div style="position:absolute; left:9.98mm; top:62.16mm; width:86mm; font-family:'Inter',sans-serif; font-weight:500; font-style:italic; font-size:9.7pt; line-height:1.32; color:#000; text-align:justify;">
+        "Fomentar una cultura de Seguridad, Salud y Ambiente basada en el liderazgo, la prevención y la responsabilidad compartida, protegiendo la vida, la salud de las personas y el medio ambiente mediante el cumplimiento de nuestros estándares, procedimientos en cada actividad desarrollada."
+    </div>
+
+    <div class="pie">
+        <div class="pie-negro"></div>
+        <div style="position:absolute; left:0; right:0; top:27.74mm; text-align:center; color:#fff; font-family:'Inter',sans-serif; font-weight:500; font-style:italic; font-size:7pt; line-height:1.3; z-index:2;">
+            "Cada decisión segura protege una vida.<br>En SEDEMI, la seguridad comienza conmigo."
+        </div>
+    </div>
+</div>
+
+{# =========================================================
+   Datos personales — posiciones EXACTAS (mm) extraídas del PDF de diseño
+   original vía PyMuPDF (get_text / get_drawings), no aproximadas. Cada
+   campo: (clave en datos_personales, etiqueta, x/y de la etiqueta,
+   x/y/ancho de la línea).
+   ========================================================= #}
+{% set contador.n = contador.n + 1 %}
+{% set campos_dp = [
+    {'key':'compania', 'label':'Compañía:', 'lx':42.92,'ly':23.94, 'linex':42.92,'liney':30.26,'linew':51.39},
+    {'key':'nombres_apellidos', 'label':'Nombres y Apellidos:', 'lx':42.92,'ly':35.14, 'linex':42.92,'liney':41.47,'linew':51.52},
+    {'key':'identificacion', 'label':'Identificación (Cédula/Pasaporte):', 'lx':42.92,'ly':46.35, 'linex':42.92,'liney':52.69,'linew':51.52},
+    {'key':'nacionalidad', 'label':'Nacionalidad:', 'lx':42.92,'ly':57.57, 'linex':42.92,'liney':63.85,'linew':51.52},
+    {'key':'fecha_nacimiento', 'label':'Fecha de nacimiento:', 'lx':9.91,'ly':68.73, 'linex':9.91,'liney':75.02,'linew':84.53},
+    {'key':'direccion', 'label':'Dirección domiciliaria (ciudad, barrio, calle y número de domicilio):', 'lx':9.90,'ly':79.89, 'linex':9.90,'liney':86.18,'linew':84.49},
+    {'key':'numero_celular', 'label':'Número de celular:', 'lx':9.92,'ly':91.05, 'linex':32.55,'liney':93.85,'linew':61.89},
+    {'key':'codigo_colaborador', 'label':'Código del Colaborador:', 'lx':9.92,'ly':98.72, 'linex':40.15,'liney':101.52,'linew':54.29},
+    {'key':'cargo', 'label':'Cargo:', 'lx':9.92,'ly':106.39, 'linex':19.27,'liney':109.18,'linew':75.17},
+    {'key':'area', 'label':'Área:', 'lx':9.92,'ly':114.06, 'linex':17.09,'liney':116.85,'linew':77.35},
+    {'key':'tipo_licencia', 'label':'Tipo de licencia de conducir:', 'lx':9.92,'ly':121.73, 'linex':45.16,'liney':124.52,'linew':49.28},
+    {'key':'fecha_caducidad_licencia', 'label':'Fecha de caducidad de licencia de conducir:', 'lx':9.92,'ly':129.4, 'linex':63.42,'liney':132.18,'linew':31.02},
+] %}
+<div class="pagina">
+    {{ cinta_esquina() }}
+    <div class="badge-rojo"></div>
+    <div class="badge-numero">2</div>
+    <div class="encabezado">
         <div class="titulo">Datos Personales</div>
     </div>
-    <div class="contenido">
-        <div class="fila-datos">
-            <div class="col-foto">
-                <div class="foto-box">
-                    {% if datos_personales.foto_base64 %}
-                        <img src="{{ datos_personales.foto_base64 }}">
-                    {% else %}
-                        Fotografía
-                    {% endif %}
-                </div>
-            </div>
-            <div class="col-campos">
-                <div class="campo"><div class="etiqueta">Compañía:</div><div class="linea">{{ datos_personales.compania }}</div></div>
-                <div class="campo"><div class="etiqueta">Nombres y Apellidos:</div><div class="linea">{{ datos_personales.nombres_apellidos }}</div></div>
-                <div class="campo"><div class="etiqueta">Identificación (Cédula/Pasaporte):</div><div class="linea">{{ datos_personales.identificacion }}</div></div>
-                <div class="campo"><div class="etiqueta">Nacionalidad:</div><div class="linea">{{ datos_personales.nacionalidad }}</div></div>
-            </div>
-        </div>
-        <div class="campo"><div class="etiqueta">Fecha de nacimiento:</div><div class="linea">{{ datos_personales.fecha_nacimiento }}</div></div>
-        <div class="campo"><div class="etiqueta">Dirección domiciliaria (ciudad, barrio, calle y número de domicilio):</div><div class="linea">{{ datos_personales.direccion }}</div></div>
-        <div class="campo"><div class="etiqueta">Número de celular:</div><div class="linea">{{ datos_personales.numero_celular }}</div></div>
-        <div class="campo"><div class="etiqueta">Código del Colaborador:</div><div class="linea">{{ datos_personales.codigo_colaborador }}</div></div>
-        <div class="campo"><div class="etiqueta">Cargo:</div><div class="linea">{{ datos_personales.cargo }}</div></div>
-        <div class="campo"><div class="etiqueta">Área:</div><div class="linea">{{ datos_personales.area }}</div></div>
-        <div class="campo"><div class="etiqueta">Tipo de licencia de conducir:</div><div class="linea">{{ datos_personales.tipo_licencia }}</div></div>
-        <div class="campo"><div class="etiqueta">Fecha de caducidad de licencia de conducir:</div><div class="linea">{{ datos_personales.fecha_caducidad_licencia }}</div></div>
+
+    <div class="foto-box-abs">
+        {% if datos_personales.foto_base64 %}
+            <img src="{{ datos_personales.foto_base64 }}">
+        {% else %}
+            <div style="font-family:'Inter',sans-serif; font-weight:600; font-size:7pt; color:#000;">Fotografía:</div>
+        {% endif %}
     </div>
+
+    {% for c in campos_dp %}
+    <div class="campo-abs" style="left:{{ c.lx }}mm; top:{{ c.ly }}mm;">
+        <div class="etiqueta">{{ c.label }}</div>
+    </div>
+    <div class="linea-abs" style="left:{{ c.linex }}mm; top:{{ c.liney }}mm; width:{{ c.linew }}mm;"></div>
+    <div class="valor-abs" style="left:{{ c.linex }}mm; top:{{ c.liney - 3.2 }}mm; width:{{ c.linew }}mm;">{{ datos_personales[c.key] }}</div>
+    {% endfor %}
+
     {{ pie(contador.n) }}
 </div>
 
@@ -254,29 +522,93 @@
    Información de emergencia
    ========================================================= #}
 {% set contador.n = contador.n + 1 %}
+{% set campos_em = [
+    {'key':'tipo_sangre', 'label':'Tipo de Sangre:', 'ly':24.51, 'liney':32.34},
+    {'key':'enfermedades', 'label':'Enfermedades importantes:', 'ly':35.24, 'liney':43.07},
+    {'key':'alergias', 'label':'Alergias:', 'ly':45.97, 'liney':53.81},
+    {'key':'contacto1_nombre', 'label':'Contacto 1:', 'ly':56.70, 'liney':64.54},
+    {'key':'contacto1_parentesco', 'label':'Parentesco:', 'ly':67.44, 'liney':75.27},
+    {'key':'contacto1_numero', 'label':'Número de contacto:', 'ly':78.17, 'liney':86.01},
+    {'key':'contacto2_nombre', 'label':'Contacto 2:', 'ly':88.90, 'liney':96.74},
+    {'key':'contacto2_parentesco', 'label':'Parentesco:', 'ly':99.63, 'liney':107.47},
+    {'key':'contacto2_numero', 'label':'Número de contacto:', 'ly':110.36, 'liney':118.20},
+] %}
 <div class="pagina">
     {{ cinta_esquina() }}
+    <div class="badge-rojo"></div>
+    <div class="badge-numero">3</div>
     <div class="encabezado">
-        <div class="numero">3</div>
         <div class="titulo">Información de Emergencia</div>
     </div>
-    <div class="contenido">
-        <div class="campo"><div class="etiqueta">Tipo de Sangre:</div><div class="linea">{{ info_emergencia.tipo_sangre }}</div></div>
-        <div class="campo"><div class="etiqueta">Enfermedades importantes:</div><div class="linea">{{ info_emergencia.enfermedades }}</div></div>
-        <div class="campo"><div class="etiqueta">Alergias:</div><div class="linea">{{ info_emergencia.alergias }}</div></div>
-        <div class="campo"><div class="etiqueta">Contacto 1:</div><div class="linea">{{ info_emergencia.contacto1_nombre }}</div></div>
-        <div class="campo"><div class="etiqueta">Parentesco:</div><div class="linea">{{ info_emergencia.contacto1_parentesco }}</div></div>
-        <div class="campo"><div class="etiqueta">Número de contacto:</div><div class="linea">{{ info_emergencia.contacto1_numero }}</div></div>
-        <div class="campo"><div class="etiqueta">Contacto 2:</div><div class="linea">{{ info_emergencia.contacto2_nombre }}</div></div>
-        <div class="campo"><div class="etiqueta">Parentesco:</div><div class="linea">{{ info_emergencia.contacto2_parentesco }}</div></div>
-        <div class="campo"><div class="etiqueta">Número de contacto:</div><div class="linea">{{ info_emergencia.contacto2_numero }}</div></div>
-        <div class="tarjeta" style="border:none; margin-top:2mm;">
-            <div class="icono-col" style="flex-basis:14mm;"><img src="assets/pasaporte/pag3_img1.png"></div>
-            <div class="datos-col intro" style="margin-top:2mm;">"En una emergencia, tu información y contactos pueden marcar la diferencia y facilitar que recibas ayuda a tiempo."</div>
-        </div>
+
+    {% for c in campos_em %}
+    <div class="campo-abs" style="left:9.95mm; top:{{ c.ly }}mm;">
+        <div class="etiqueta" style="font-size:8pt;">{{ c.label }}</div>
     </div>
+    <div class="linea-abs" style="left:9.95mm; top:{{ c.liney }}mm; width:84.5mm;"></div>
+    <div class="valor-abs" style="left:9.95mm; top:{{ c.liney - 3.3 }}mm; width:84.5mm; font-size:8pt;">{{ info_emergencia[c.key] }}</div>
+    {% endfor %}
+
+    <img src="assets/pasaporte/pag3_img1.png" style="position:absolute; left:17.28mm; top:121.63mm; width:10mm; height:9.97mm;">
+    <div style="position:absolute; left:29.28mm; top:122.3mm; width:65mm; font-family:'Inter',sans-serif; font-weight:500; font-style:italic; font-size:7pt; line-height:1.32; color:#000;">"En una emergencia, tu información y contactos pueden marcar la diferencia y facilitar que recibas ayuda a tiempo."</div>
+
     {{ pie(contador.n) }}
 </div>
+
+{# =========================================================
+   Compromisos SSA (12 Reglas de Oro) — 2 páginas fijas, 6 tarjetas cada
+   una. Contenido 100% estático (reglas de la empresa), coordenadas de la
+   cuadrícula exactas del PDF; el texto de cada tarjeta fluye en vez de
+   posicionarse línea por línea (en el original la descripción arranca
+   justo debajo del título sin importar cuántas líneas ocupe éste).
+   ========================================================= #}
+{% set reglas_pag4 = [
+    {'img':'pag4_img1.png', 'titulo':'YO USO SIEMPRE MI EQUIPO DE PROTECCIÓN PERSONAL', 'desc':'de acuerdo con la actividad que realizo.'},
+    {'img':'pag4_img2.png', 'titulo':'YO MANTENGO MI ATENCIÓN EN EL TRABAJO', 'desc':'evitando el uso de celulares, audífonos u otros elementos que generen distracciones.'},
+    {'img':'pag4_img3.png', 'titulo':'YO MANTENGO UNA PRESENTACIÓN SEGURA', 'desc':'sin utilizar joyas, bisutería u objetos que representen un riesgo durante mi jornada laboral.'},
+    {'img':'pag4_img4.png', 'titulo':'YO CUMPLO CON LOS PROCEDIMIENTOS, NORMAS Y PERMISOS DE TRABAJO', 'desc':'porque mi seguridad es mi responsabilidad.'},
+    {'img':'pag4_img5.png', 'titulo':'YO REPORTO DE INMEDIATO', 'desc':'todo acto o condición subestándar, incidente, accidente o casi accidente.'},
+    {'img':'pag4_img6.png', 'titulo':'YO DETENGO EL TRABAJO', 'desc':'cuando identifique un riesgo grave o una condición insegura que pueda afectar a las personas, al ambiente o a las instalaciones.'},
+] %}
+{% set reglas_pag5 = [
+    {'img':'pag5_img1.png', 'titulo':'YO PARTICIPO ACTIVAMENTE', 'desc':'en las charlas de seguridad, capacitaciones e inducciones antes de iniciar mis actividades.'},
+    {'img':'pag5_img2.png', 'titulo':'YO INSPECCIONO MIS HERRAMIENTAS, EQUIPOS Y ÁREA DE TRABAJO', 'desc':'antes de utilizarlos.'},
+    {'img':'pag5_img3.png', 'titulo':'YO MANTENGO EL ORDEN Y LA LIMPIEZA', 'desc':'en mi lugar de trabajo para prevenir incidentes y cuidar el ambiente.'},
+    {'img':'pag5_img4.png', 'titulo':'YO PROTEJO EL MEDIO AMBIENTE', 'desc':'haciendo uso responsable de los recursos y gestionando correctamente los residuos.'},
+    {'img':'pag5_img5.png', 'titulo':'YO RESPETO LA VIDA Y LA SEGURIDAD DE MIS COMPAÑEROS', 'desc':'promoviendo una cultura de prevención y trabajo seguro.'},
+    {'img':'pag5_img6.png', 'titulo':'YO REGRESO A CASA SANO Y SALVO', 'desc':'porque ninguna tarea es tan urgente o importante como para poner en riesgo mi vida.'},
+] %}
+{% set grid_pos = [
+    {'left':10.97,'top':24.82}, {'left':56.30,'top':24.82},
+    {'left':10.97,'top':62.28}, {'left':56.30,'top':62.28},
+    {'left':10.97,'top':99.73}, {'left':56.30,'top':99.73},
+] %}
+
+{% for reglas in [reglas_pag4, reglas_pag5] %}
+{% set contador.n = contador.n + 1 %}
+<div class="pagina">
+    {{ cinta_esquina() }}
+    <div class="badge-rojo"></div>
+    <div class="badge-numero">4</div>
+    <div class="encabezado">
+        <div class="titulo">Compromisos SSA</div>
+    </div>
+
+    {% for regla in reglas %}
+    {% set gp = grid_pos[loop.index0] %}
+    <div class="regla-card" style="left:{{ gp.left }}mm; top:{{ gp.top }}mm;">
+        <div class="badge-num">{{ loop.index }}</div>
+        <div class="regla-icono"><img src="assets/pasaporte/{{ regla.img }}"></div>
+        <div class="regla-texto">
+            <div class="regla-titulo">{{ regla.titulo }}</div>
+            <div class="regla-desc">{{ regla.desc }}</div>
+        </div>
+    </div>
+    {% endfor %}
+
+    {{ pie(contador.n) }}
+</div>
+{% endfor %}
 
 {# =========================================================
    Competencias (Inducción / Capacitación) — SECCIÓN DINÁMICA
@@ -286,32 +618,41 @@
 {% set contador.n = contador.n + 1 %}
 <div class="pagina">
     {{ cinta_esquina() }}
+    <div class="badge-rojo"></div>
+    <div class="badge-numero">5</div>
     <div class="encabezado">
-        <div class="numero">5</div>
         <div class="titulo">Competencias</div>
     </div>
-    <div class="contenido">
-        {% for c in pagina %}
-        <table class="tabla-simple">
-            <tr>
-                <th style="width:50%;">Inducción{% if c.get('tipo') == 'Inducción' %} (X){% endif %}</th>
-                <th style="width:50%;">Capacitación{% if c.get('tipo') == 'Capacitación' %} (X){% endif %}</th>
-            </tr>
-            <tr><td colspan="2"><strong>Nombre del curso:</strong> {{ c.get('nombre_curso', '') }}</td></tr>
-            <tr><td colspan="2"><strong>Nombre del instructor:</strong> {{ c.get('nombre_instructor', '') }}</td></tr>
-            <tr>
-                <td>
-                    <strong>Expedición:</strong> {{ c.get('expedicion', '') }}<br>
-                    <strong>Vencimiento:</strong> {{ c.get('vencimiento', '') }}
-                </td>
-                <td>
-                    <strong>Firma/Sello del instructor:</strong><br>
-                    {% if c.get('firma_sello_base64') %}<img src="{{ c.get('firma_sello_base64') }}" style="max-width:20mm; max-height:10mm;">{% endif %}
-                </td>
-            </tr>
-        </table>
-        {% endfor %}
-    </div>
+    {% for c in pagina %}
+    {% set bt = 24.19 + loop.index0 * 36.11 %}
+    <table class="tabla-competencia" style="top:{{ bt }}mm;">
+        <colgroup><col style="width:21.13mm;"><col style="width:21.14mm;"><col style="width:42.27mm;"></colgroup>
+        <tr>
+            <td colspan="2">INDUCCIÓN{% if c.get('tipo') == 'Inducción' %} (X){% endif %}</td>
+            <td>CAPACITACIÓN{% if c.get('tipo') == 'Capacitación' %} (X){% endif %}</td>
+        </tr>
+        <tr>
+            <td>NOMBRE DEL CURSO</td>
+            <td colspan="2" class="valor-tc">{{ c.get('nombre_curso', '') }}</td>
+        </tr>
+        <tr>
+            <td>NOMBRE DEL INSTRUCTOR</td>
+            <td colspan="2" class="valor-tc">{{ c.get('nombre_instructor', '') }}</td>
+        </tr>
+        <tr>
+            <td>EXPEDICIÓN</td>
+            <td class="valor-tc">{{ c.get('expedicion', '') }}</td>
+            <td rowspan="2">
+                FIRMA/SELLO DEL INSTRUCTOR
+                {% if c.get('firma_sello_base64') %}<br><img src="{{ c.get('firma_sello_base64') }}" style="max-width:20mm; max-height:8mm;">{% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td>VENCIMIENTO</td>
+            <td class="valor-tc">{{ c.get('vencimiento', '') }}</td>
+        </tr>
+    </table>
+    {% endfor %}
     {{ pie(contador.n) }}
 </div>
 {% endfor %}
@@ -323,30 +664,40 @@
 {% set contador.n = contador.n + 1 %}
 <div class="pagina">
     {{ cinta_esquina() }}
+    <div class="badge-rojo"></div>
+    <div class="badge-numero">6</div>
     <div class="encabezado">
-        <div class="numero">6</div>
         <div class="titulo">Reconocimientos SSA</div>
     </div>
-    <div class="encabezado subtitulo">Reconocemos el compromiso con la seguridad.</div>
-    <div class="contenido">
-        {% for r in pagina %}
-        <div class="tarjeta">
-            <div class="icono-col">
-                <img src="assets/pasaporte/pag6_img1.png">
-                <div class="rotulo">EMPLEADO<br>SEGURO DEL MES</div>
-            </div>
-            <div class="datos-col">
-                <div class="intro">Destacamos a quien demuestra compromiso, responsabilidad y cuidado todos los días.</div>
-                <div class="campo"><div class="etiqueta">Mes:</div><div class="linea">{{ r.get('mes', '') }}</div></div>
-                <div class="campo"><div class="etiqueta">Actividad:</div><div class="linea">{{ r.get('actividad', '') }}</div></div>
-                <div class="campo">
-                    <div class="etiqueta">Firma:</div>
-                    {% if r.get('firma_base64') %}<img src="{{ r.get('firma_base64') }}" style="max-width:20mm; max-height:8mm;">{% else %}<div class="linea"></div>{% endif %}
-                </div>
-            </div>
-        </div>
-        {% endfor %}
+    <div class="subtitulo-barra"></div>
+    <div class="subtitulo">Reconocemos el compromiso con la seguridad.</div>
+
+    {% for r in pagina %}
+    {% set ct = 30.36 + loop.index0 * 35.31 %}
+    <div class="tarjeta-abs" style="top:{{ ct }}mm; height:30.39mm;">
+        <div class="badge-num" style="left:1.46mm; top:1.84mm; width:3.8mm; height:3.8mm;">{{ loop.index }}</div>
+        <img src="assets/pasaporte/pag6_img1.png" style="position:absolute; left:12.85mm; top:1.82mm; width:12.19mm; height:16.32mm;">
+        <div class="linea-roja" style="left:6.66mm; top:19.53mm; width:24.5mm;"></div>
+        <div class="titulo-icono" style="top:20.45mm;">EMPLEADO<br>SEGURO DEL MES</div>
+        <div class="intro" style="top:1.90mm;">Destacamos a quien demuestra compromiso, responsabilidad y cuidado todos los días.</div>
+
+        <div class="etiqueta-tc" style="top:9.41mm;">Mes:</div>
+        <div class="linea-tc" style="top:14.28mm;"></div>
+        <div class="valor-tc" style="top:11.1mm;">{{ r.get('mes', '') }}</div>
+
+        <div class="etiqueta-tc" style="top:16.50mm;">Actividad:</div>
+        <div class="linea-tc" style="top:21.36mm;"></div>
+        <div class="valor-tc" style="top:18.2mm;">{{ r.get('actividad', '') }}</div>
+
+        <div class="etiqueta-tc" style="top:23.59mm;">Firma:</div>
+        {% if r.get('firma_base64') %}
+        <img src="{{ r.get('firma_base64') }}" style="position:absolute; left:40.53mm; top:23.5mm; max-width:38.65mm; max-height:5mm;">
+        {% else %}
+        <div class="linea-tc" style="top:28.45mm;"></div>
+        {% endif %}
     </div>
+    {% endfor %}
+
     {{ pie(contador.n) }}
 </div>
 {% endfor %}
@@ -358,33 +709,160 @@
 {% set contador.n = contador.n + 1 %}
 <div class="pagina">
     {{ cinta_esquina() }}
+    <div class="badge-rojo"></div>
+    <div class="badge-numero">6</div>
     <div class="encabezado">
-        <div class="numero">6</div>
         <div class="titulo">Reconocimientos SSA</div>
     </div>
-    <div class="encabezado subtitulo">Reconocemos el compromiso con la seguridad.</div>
-    <div class="contenido">
-        {% for b in pagina %}
-        <div class="tarjeta">
-            <div class="icono-col">
-                <img src="assets/pasaporte/pag6_img2.png">
-                <div class="rotulo">BUENAS<br>PRÁCTICAS</div>
-            </div>
-            <div class="datos-col">
-                <div class="intro">Reconocemos acciones que contribuyen a un ambiente seguro y saludable.</div>
-                <div class="campo"><div class="etiqueta">Acción destacada:</div><div class="linea">{{ b.get('accion_destacada', '') }}</div></div>
-                <div class="campo"><div class="etiqueta">Mes:</div><div class="linea">{{ b.get('mes', '') }}</div></div>
-                <div class="campo">
-                    <div class="etiqueta">Firma:</div>
-                    {% if b.get('firma_base64') %}<img src="{{ b.get('firma_base64') }}" style="max-width:20mm; max-height:8mm;">{% else %}<div class="linea"></div>{% endif %}
-                </div>
-            </div>
-        </div>
-        {% endfor %}
+    <div class="subtitulo-barra"></div>
+    <div class="subtitulo">Reconocemos el compromiso con la seguridad.</div>
+
+    {% for b in pagina %}
+    {% set ct = 30.36 + loop.index0 * 35.51 %}
+    <div class="tarjeta-abs" style="top:{{ ct }}mm; height:29.61mm;">
+        <div class="badge-num" style="left:1.48mm; top:1.79mm; width:3.8mm; height:3.71mm;">{{ loop.index }}</div>
+        <img src="assets/pasaporte/pag6_img2.png" style="position:absolute; left:11.37mm; top:1.35mm; width:15.53mm; height:16.26mm;">
+        <div class="linea-roja" style="left:6.67mm; top:19.03mm; width:24.5mm;"></div>
+        <div class="titulo-icono" style="left:0mm; width:38mm; top:19.90mm;">BUENAS<br>PRÁCTICAS</div>
+        <div class="intro" style="top:1.84mm;">Reconocemos acciones que contribuyen a un ambiente seguro y saludable.</div>
+
+        <div class="etiqueta-tc" style="top:9.15mm;">Acción destacada:</div>
+        <div class="linea-tc" style="top:13.91mm;"></div>
+        <div class="valor-tc" style="top:10.9mm;">{{ b.get('accion_destacada', '') }}</div>
+
+        <div class="etiqueta-tc" style="top:16.06mm;">Mes:</div>
+        <div class="linea-tc" style="top:20.82mm;"></div>
+        <div class="valor-tc" style="top:17.8mm;">{{ b.get('mes', '') }}</div>
+
+        <div class="etiqueta-tc" style="top:22.96mm;">Firma:</div>
+        {% if b.get('firma_base64') %}
+        <img src="{{ b.get('firma_base64') }}" style="position:absolute; left:40.53mm; top:22.9mm; max-width:38.65mm; max-height:5mm;">
+        {% else %}
+        <div class="linea-tc" style="top:27.72mm;"></div>
+        {% endif %}
     </div>
+    {% endfor %}
+
     {{ pie(contador.n) }}
 </div>
 {% endfor %}
+
+{# =========================================================
+   Constancia de Entrega — texto legal 100% estático (líneas con blancos
+   para llenar a mano), coordenadas exactas del PDF. Igual que Bienvenida,
+   esta página NO tiene número de pie ni cinta roja (texto centrado) — así
+   viene en el original.
+   ========================================================= #}
+{% set contador.n = contador.n + 1 %}
+{# Cada párrafo es UN bloque justificado (no una línea por div): así el
+   ancho del texto lo resuelve el navegador/WeasyPrint según su propia
+   métrica de fuente, en vez de asumir que coincide línea por línea con el
+   PDF original — eso era lo que causaba que una línea se recorriera a 2
+   renglones y se superpusiera con el texto de abajo. #}
+{% set parrafos_constancia = [
+    (50.00, 'Yo, ______________________________________________, identificado/a con cédula de ciudadanía N.° ________________________, declaro haber recibido de SEDEMI S.C.C. – Sociedad de Servicios de Mecánica Industrial, Diseño, Construcción y Montaje S.C.C., mi Pasaporte de Seguridad, como documento personal de identificación y registro de mis procesos de Seguridad, Salud y Ambiente (SSA).'),
+    (69.87, 'Declaro que he recibido el documento en condiciones adecuadas y que conozco que su contenido constituye una herramienta para el registro y control de inducciones, capacitaciones, competencias y demás requisitos de seguridad aplicables a las actividades que desarrolle.'),
+    (84.07, 'Me comprometo a conservarlo, mantenerlo en buen estado, presentarlo cuando sea requerido y cumplir las disposiciones, procedimientos, estándares y Reglas de Oro de Seguridad establecidos por SEDEMI y por los proyectos en los que participe.'),
+    (98.27, 'En cumplimiento de lo previsto en la Ley Orgánica de Protección de Datos Personales, la información aquí proporcionada tendrá el tratamiento establecido en la referida Ley y las medidas adoptadas por el GRUPO CORPORATIVO SEDEMI.'),
+] %}
+<div class="pagina">
+    {{ cinta_esquina() }}
+    <div class="badge-rojo"></div>
+    <div class="badge-numero">7</div>
+    <div class="encabezado">
+        <div class="titulo">Constancia de Entrega</div>
+    </div>
+
+    <div style="position:absolute; left:9.92mm; top:23.12mm; font-family:Arial,'Inter',sans-serif; font-weight:400; font-size:7pt; color:#000;">Fecha de entrega: ____/____/_____</div>
+    <div style="position:absolute; left:9.92mm; top:29.72mm; font-family:Arial,'Inter',sans-serif; font-weight:400; font-size:7pt; color:#000;">Técnico/Responsable SSA que realiza la entrega:</div>
+    <div style="position:absolute; left:9.92mm; top:32.56mm; font-family:Arial,'Inter',sans-serif; font-weight:400; font-size:7pt; color:#000;">______________________________________________</div>
+    <div style="position:absolute; left:9.92mm; top:39.45mm; font-family:Arial,'Inter',sans-serif; font-weight:400; font-size:7pt; color:#000;">Firma: ________________________</div>
+    <div style="position:absolute; left:84mm; top:19.7mm; font-family:Arial,sans-serif; font-weight:700; font-size:11.2pt; color:#EA0029;">XXXX</div>
+
+    <div style="position:absolute; left:0; right:0; top:46.49mm; border-top:0.75pt dashed var(--sedemi-red);"></div>
+
+    {% for top, txt in parrafos_constancia %}
+    <div style="position:absolute; left:9.92mm; top:{{ top }}mm; width:85.2mm; font-family:Arial,'Inter',sans-serif; font-weight:400; font-size:7pt; line-height:1.16; color:#000; text-align:justify;">{{ txt }}</div>
+    {% endfor %}
+
+    <div style="position:absolute; left:9.92mm; top:112.05mm; font-family:Arial,'Inter',sans-serif; font-weight:700; font-size:7pt; color:#000;">DATOS DEL COLABORADOR:</div>
+    <div style="position:absolute; left:9.92mm; top:116.55mm; font-family:Arial,'Inter',sans-serif; font-weight:400; font-size:7pt; color:#000;">Nombres y Apellidos:____________________________________________</div>
+    <div style="position:absolute; left:9.96mm; top:121.56mm; font-family:Arial,'Inter',sans-serif; font-weight:400; font-size:7pt; color:#000;">Cédula:_________________________________________</div>
+    <div style="position:absolute; left:9.92mm; top:126.79mm; font-family:Arial,'Inter',sans-serif; font-weight:400; font-size:7pt; color:#000;">Fecha de recepción: ____/____/_____</div>
+    <div style="position:absolute; left:9.92mm; top:132.09mm; font-family:Arial,'Inter',sans-serif; font-weight:400; font-size:7pt; color:#000;">Firma del colaborador: ________________________</div>
+    <div style="position:absolute; left:81mm; top:132.0mm; font-family:Arial,sans-serif; font-weight:700; font-size:11.2pt; color:#EA0029;">XXXX</div>
+
+    <div class="pie">
+        <div class="pie-negro"></div>
+        <div style="position:absolute; left:0; right:0; top:27.74mm; text-align:center; color:#fff; font-family:'Inter',sans-serif; font-weight:500; font-style:italic; font-size:7pt; line-height:1.3; z-index:2;">
+            "Cada decisión segura protege una vida.<br>En SEDEMI, la seguridad comienza conmigo."
+        </div>
+    </div>
+</div>
+
+{# =========================================================
+   Hoja en blanco — el PDF original la trae completamente vacía (ni
+   siquiera encabezado o pie), se replica igual. NO incrementa el contador.
+   ========================================================= #}
+<div class="pagina"></div>
+
+{# =========================================================
+   Contactos de Emergencia — coordenadas exactas del PDF. Sin número de
+   pie (igual que Bienvenida/Constancia).
+   ========================================================= #}
+{% set contador.n = contador.n + 1 %}
+{% set contactos = [
+    {'badge':'1', 'icono':'pag8_img1.png', 'nombre':'Jefe SIG', 'telefono':'+593 98 908 6700', 'top':35.23},
+    {'badge':'2', 'icono':'pag8_img2.png', 'nombre':'Médico Ocupacional', 'telefono':'+593 999 530 571', 'top':56.26},
+    {'badge':'1', 'icono':'pag8_img3.png', 'nombre':'Responsabilidad Social', 'telefono':'+593 993 700 500', 'top':77.29},
+    {'badge':'1', 'icono':'pag8_img4.png', 'nombre':'Técnico de Seguridad Industrial', 'telefono':'+593 999 396 879', 'top':98.32},
+] %}
+<div class="pagina">
+    {{ cinta_esquina() }}
+    <div class="badge-rojo"></div>
+    <div class="badge-numero">8</div>
+    <div class="encabezado">
+        <div class="titulo">Contactos de Emergencia</div>
+    </div>
+    <div class="subtitulo-barra" style="top:24.79mm;"></div>
+    <div class="subtitulo" style="top:25.98mm;">Información clave para actuar a tiempo</div>
+
+    {% for c in contactos %}
+    <div class="contacto-card" style="top:{{ c.top }}mm;">
+        <div class="badge-num">{{ c.badge }}</div>
+        <div class="contacto-icono"><img src="assets/pasaporte/{{ c.icono }}"></div>
+        <div class="contacto-divisor"></div>
+        <div class="contacto-textos">
+            <div class="contacto-nombre">{{ c.nombre }}</div>
+            <div class="contacto-tel-fila">
+                <img class="contacto-tel-icono" src="assets/pasaporte/pag8_phone.png">
+                <div class="contacto-telefono">{{ c.telefono }}</div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <div class="contacto-destacado">
+        <svg class="contacto-destacado-swoosh" viewBox="0 0 7.645 9.2"><path d="M7.645,0 L6.693,0 C5.222,0 3.884,0.852 3.264,2.186 L0,9.2 L0.942,9.2 C2.413,9.2 3.751,8.348 4.373,7.015 L7.645,0 Z" fill="#fff"></path></svg>
+        <div class="contacto-destacado-texto">En SEDEMI, tu bienestar es nuestra prioridad; por eso estamos preparados para cuidarte y actuar cuando más lo necesitas.</div>
+    </div>
+
+    <div class="pie">
+        <div class="pie-negro"></div>
+        <div style="position:absolute; left:0; right:0; top:27.74mm; text-align:center; color:#fff; font-family:'Inter',sans-serif; font-weight:500; font-style:italic; font-size:7pt; line-height:1.3; z-index:2;">
+            "Cada decisión segura protege una vida.<br>En SEDEMI, la seguridad comienza conmigo."
+        </div>
+    </div>
+</div>
+
+{# =========================================================
+   Contraportada — igual que la portada: 100% arte gráfico (curvas,
+   íconos de redes sociales, texto ya incluido en el render), exportada
+   como imagen completa a 300dpi directo del PDF. Sin número de página.
+   ========================================================= #}
+<div class="pagina">
+    <img src="assets/pasaporte/pag13_contraportada.png" style="position:absolute; inset:0; width:105mm; height:148mm; object-fit:cover;">
+</div>
 
 </body>
 </html>

@@ -10,7 +10,7 @@ router = APIRouter(prefix="/api/v1", tags=["pasaporte"])
 @router.post("/generar-pdf-pasaporte/")
 def generar_pdf_pasaporte_endpoint(payload: PayloadPasaporte):
     try:
-        pdf_bytes = generar_pdf_pasaporte(payload.dict())
+        pdf_bytes = generar_pdf_pasaporte(payload.model_dump())
         file_stream = BytesIO(pdf_bytes)
         file_stream.seek(0)
         return StreamingResponse(
