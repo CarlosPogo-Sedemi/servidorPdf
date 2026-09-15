@@ -898,67 +898,8 @@
 {% endfor %}
 
 {# =========================================================
-   Constancia de Entrega — texto legal 100% estático (líneas con blancos
-   para llenar a mano), coordenadas exactas del PDF. Igual que Bienvenida,
-   esta página NO tiene número de pie ni cinta roja (texto centrado) — así
-   viene en el original.
-   ========================================================= #}
-{% set contador.n = contador.n + 1 %}
-{# Cada párrafo es UN bloque justificado (no una línea por div): así el
-   ancho del texto lo resuelve el navegador/WeasyPrint según su propia
-   métrica de fuente, en vez de asumir que coincide línea por línea con el
-   PDF original — eso era lo que causaba que una línea se recorriera a 2
-   renglones y se superpusiera con el texto de abajo. #}
-{% set parrafos_constancia = [
-    (50.00, 'Yo, ______________________________________________, identificado/a con cédula de ciudadanía N.° ________________________, declaro haber recibido de SEDEMI S.C.C. – Sociedad de Servicios de Mecánica Industrial, Diseño, Construcción y Montaje S.C.C., mi Pasaporte de Seguridad, como documento personal de identificación y registro de mis procesos de Seguridad, Salud y Ambiente (SSA).'),
-    (69.87, 'Declaro que he recibido el documento en condiciones adecuadas y que conozco que su contenido constituye una herramienta para el registro y control de inducciones, capacitaciones, competencias y demás requisitos de seguridad aplicables a las actividades que desarrolle.'),
-    (84.07, 'Me comprometo a conservarlo, mantenerlo en buen estado, presentarlo cuando sea requerido y cumplir las disposiciones, procedimientos, estándares y Reglas de Oro de Seguridad establecidos por SEDEMI y por los proyectos en los que participe.'),
-    (98.27, 'En cumplimiento de lo previsto en la Ley Orgánica de Protección de Datos Personales, la información aquí proporcionada tendrá el tratamiento establecido en la referida Ley y las medidas adoptadas por el GRUPO CORPORATIVO SEDEMI.'),
-] %}
-<div class="pagina">
-    {{ cinta_esquina() }}
-    <div class="badge-rojo"></div>
-    <div class="badge-numero">8</div>
-    <div class="encabezado">
-        <div class="titulo">Constancia de Entrega</div>
-    </div>
-
-    <div style="position:absolute; left:9.92mm; top:23.12mm; font-family:Arial,'Inter',sans-serif; font-weight:400; font-size:7pt; color:#000;">Fecha de entrega: ____/____/_____</div>
-    <div style="position:absolute; left:9.92mm; top:29.72mm; font-family:Arial,'Inter',sans-serif; font-weight:400; font-size:7pt; color:#000;">Técnico/Responsable SSA que realiza la entrega:</div>
-    <div style="position:absolute; left:9.92mm; top:32.56mm; font-family:Arial,'Inter',sans-serif; font-weight:400; font-size:7pt; color:#000;">______________________________________________</div>
-    <div style="position:absolute; left:9.92mm; top:39.45mm; font-family:Arial,'Inter',sans-serif; font-weight:400; font-size:7pt; color:#000;">Firma: ________________________</div>
-    <div style="position:absolute; left:84mm; top:19.7mm; font-family:Arial,sans-serif; font-weight:700; font-size:11.2pt; color:#EA0029;">XXXX</div>
-
-    <div style="position:absolute; left:0; right:0; top:46.49mm; border-top:0.75pt dashed var(--sedemi-red);"></div>
-
-    {% for top, txt in parrafos_constancia %}
-    <div style="position:absolute; left:9.92mm; top:{{ top }}mm; width:85.2mm; font-family:Arial,'Inter',sans-serif; font-weight:400; font-size:7pt; line-height:1.16; color:#000; text-align:justify;">{{ txt }}</div>
-    {% endfor %}
-
-    <div style="position:absolute; left:9.92mm; top:112.05mm; font-family:Arial,'Inter',sans-serif; font-weight:700; font-size:7pt; color:#000;">DATOS DEL COLABORADOR:</div>
-    <div style="position:absolute; left:9.92mm; top:116.55mm; font-family:Arial,'Inter',sans-serif; font-weight:400; font-size:7pt; color:#000;">Nombres y Apellidos:____________________________________________</div>
-    <div style="position:absolute; left:9.96mm; top:121.56mm; font-family:Arial,'Inter',sans-serif; font-weight:400; font-size:7pt; color:#000;">Cédula:_________________________________________</div>
-    <div style="position:absolute; left:9.92mm; top:126.79mm; font-family:Arial,'Inter',sans-serif; font-weight:400; font-size:7pt; color:#000;">Fecha de recepción: ____/____/_____</div>
-    <div style="position:absolute; left:9.92mm; top:132.09mm; font-family:Arial,'Inter',sans-serif; font-weight:400; font-size:7pt; color:#000;">Firma del colaborador: ________________________</div>
-    <div style="position:absolute; left:81mm; top:132.0mm; font-family:Arial,sans-serif; font-weight:700; font-size:11.2pt; color:#EA0029;">XXXX</div>
-
-    <div class="pie">
-        <div class="pie-negro"></div>
-        <div style="position:absolute; left:0; right:0; top:27.74mm; text-align:center; color:#fff; font-family:'Inter',sans-serif; font-weight:500; font-style:italic; font-size:7pt; line-height:1.3; z-index:2;">
-            "Cada decisión segura protege una vida.<br>En SEDEMI, la seguridad comienza conmigo."
-        </div>
-    </div>
-</div>
-
-{# =========================================================
-   Hoja en blanco — el PDF original la trae completamente vacía (ni
-   siquiera encabezado o pie), se replica igual. NO incrementa el contador.
-   ========================================================= #}
-<div class="pagina"></div>
-
-{# =========================================================
    Contactos de Emergencia — coordenadas exactas del PDF. Sin número de
-   pie (igual que Bienvenida/Constancia).
+   pie (igual que Bienvenida).
    ========================================================= #}
 {% set contador.n = contador.n + 1 %}
 {% set contactos = [
@@ -970,7 +911,7 @@
 <div class="pagina">
     {{ cinta_esquina() }}
     <div class="badge-rojo"></div>
-    <div class="badge-numero">9</div>
+    <div class="badge-numero">8</div>
     <div class="encabezado">
         <div class="titulo">Contactos de Emergencia</div>
     </div>
