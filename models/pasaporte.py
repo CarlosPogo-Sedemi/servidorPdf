@@ -54,12 +54,17 @@ class DatosTrabajador(BaseModel):
 
 
 class DatosVacunas(BaseModel):
-    """Bloque `VA` que ya arma Power Apps (fechas de dosis por vacuna, HA/HB
-    = Hepatitis A/B, T = Tétanos, F = Fiebre Amarilla (una sola dosis, por
-    eso no hay F2..F5), TF = Tifoidea, C = Covid-19), usado en la tabla de
+    """Bloque `VA` que ya arma Power Apps (fechas de dosis por vacuna):
+    F=Fiebre Amarilla, HA=Hepatitis A, HB=Hepatitis B, HAB=Hepatitis A y B
+    combinada, TF=Tifoidea, DT=Difteria y Tétanos, T=Tétanos, C=Covid,
+    INF=Influenza, SR=Sarampión-Rubéola. F/INF son de una sola dosis
+    (F1/INF1) e INF además es estacional — Power Apps ya manda ahí la dosis
+    del año en curso, no hace falta resolver eso acá. SR es de 2 dosis
+    (SR1/SR2). El resto admite hasta 5 (X1..X5). Usado en la tabla de
     Vacunas de Historial Médico."""
     model_config = ConfigDict(extra="ignore")
 
+    F1: Optional[str] = None
     HA1: Optional[str] = None
     HA2: Optional[str] = None
     HA3: Optional[str] = None
@@ -70,22 +75,34 @@ class DatosVacunas(BaseModel):
     HB3: Optional[str] = None
     HB4: Optional[str] = None
     HB5: Optional[str] = None
-    T1: Optional[str] = None
-    T2: Optional[str] = None
-    T3: Optional[str] = None
-    T4: Optional[str] = None
-    T5: Optional[str] = None
-    F1: Optional[str] = None
+    HAB1: Optional[str] = None
+    HAB2: Optional[str] = None
+    HAB3: Optional[str] = None
+    HAB4: Optional[str] = None
+    HAB5: Optional[str] = None
     TF1: Optional[str] = None
     TF2: Optional[str] = None
     TF3: Optional[str] = None
     TF4: Optional[str] = None
     TF5: Optional[str] = None
+    DT1: Optional[str] = None
+    DT2: Optional[str] = None
+    DT3: Optional[str] = None
+    DT4: Optional[str] = None
+    DT5: Optional[str] = None
+    T1: Optional[str] = None
+    T2: Optional[str] = None
+    T3: Optional[str] = None
+    T4: Optional[str] = None
+    T5: Optional[str] = None
     C1: Optional[str] = None
     C2: Optional[str] = None
     C3: Optional[str] = None
     C4: Optional[str] = None
     C5: Optional[str] = None
+    INF1: Optional[str] = None
+    SR1: Optional[str] = None
+    SR2: Optional[str] = None
 
 
 class RegistroMesActividad(BaseModel):

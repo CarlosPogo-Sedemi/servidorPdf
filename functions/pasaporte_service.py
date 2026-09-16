@@ -150,20 +150,23 @@ def generar_pdf_pasaporte(payload: dict) -> bytes:
             "mes": b.get("Mes") or "",
         })
 
-    # Historial Médico: tabla de Vacunas (HA/HB=Hepatitis A/B, T=Tétanos,
-    # F=Fiebre Amarilla -solo 1 dosis-, TF=Tifoidea, C=Covid) + Exámen
-    # Médico Ocupacional.
+    # Historial Médico: tabla de Vacunas. F=Fiebre Amarilla, HA/HB=Hepatitis
+    # A/B, HAB=Hepatitis A y B combinada, TF=Tifoidea, DT=Difteria y
+    # Tétanos, T=Tétanos, C=Covid, INF=Influenza, SR=Sarampión-Rubéola.
+    # F e INF son de 1 sola dosis (INF además estacional: Power Apps ya
+    # manda ahí la dosis del año en curso), SR es de 2, el resto hasta 5.
     va = data.get("VA") or {}
     vacunas = [
+        {"nombre": "Fiebre Amarilla", "dosis": [_fecha(va.get("F1")), "", "", "", ""]},
         {"nombre": "Hepatitis A", "dosis": [_fecha(va.get(f"HA{i}")) for i in range(1, 6)]},
         {"nombre": "Hepatitis B", "dosis": [_fecha(va.get(f"HB{i}")) for i in range(1, 6)]},
+        {"nombre": "Hepatitis A y B (combinada)", "dosis": [_fecha(va.get(f"HAB{i}")) for i in range(1, 6)]},
+        {"nombre": "Tifoidea", "dosis": [_fecha(va.get(f"TF{i}")) for i in range(1, 6)]},
+        {"nombre": "Difteria y Tétanos", "dosis": [_fecha(va.get(f"DT{i}")) for i in range(1, 6)]},
         {"nombre": "Tétanos", "dosis": [_fecha(va.get(f"T{i}")) for i in range(1, 6)]},
-        {"nombre": "Fiebre Amarilla", "dosis": [_fecha(va.get("F1")), "", "", "", ""]},
-        {
-            "nombre": "Tifoidea (personal de salud, catering, manejo integral de desechos)",
-            "dosis": [_fecha(va.get(f"TF{i}")) for i in range(1, 6)],
-        },
         {"nombre": "Covid - 19", "dosis": [_fecha(va.get(f"C{i}")) for i in range(1, 6)]},
+        {"nombre": "Influenza", "dosis": [_fecha(va.get("INF1")), "", "", "", ""]},
+        {"nombre": "Sarampión - Rubéola", "dosis": [_fecha(va.get("SR1")), _fecha(va.get("SR2")), "", "", ""]},
     ]
 
     nombre_medico = dt.get("NombreMedico") or ""

@@ -414,24 +414,26 @@
     }
 
     /* Tabla de Historial Médico (Vacunas + Exámen Médico Ocupacional) —
-       mismo ancho de contenido (84.5mm) que el resto de las páginas.
-       6 columnas fijas: nombre de vacuna + 5 dosis; las filas de 2
-       columnas (label/valor) usan colspan="5" sobre las últimas 5. */
+       más ancha que el resto de las páginas (6mm de margen a cada lado en
+       vez de ~9.95mm) porque son 10 vacunas y necesita el espacio extra
+       para que las fechas no se corten. 6 columnas fijas: nombre de vacuna
+       + 5 dosis; las filas de 2 columnas (label/valor) usan colspan="5"
+       sobre las últimas 5. */
     table.tabla-historial {
         position: absolute;
-        left: 9.95mm;
-        top: 24.5mm;
-        width: 84.5mm;
+        left: 6mm;
+        top: 32mm;
+        width: 93mm;
         border-collapse: collapse;
         background: #fff;
         table-layout: fixed;
     }
     table.tabla-historial td {
         border: 0.16pt solid #000;
-        padding: 0.6mm 1mm;
+        padding: 0.45mm 1mm;
         font-family: 'Inter', sans-serif;
         font-weight: 400;
-        font-size: 6pt;
+        font-size: 5.8pt;
         text-align: left;
         vertical-align: middle;
         overflow: hidden;
@@ -442,7 +444,7 @@
         font-weight: 700;
         font-size: 7pt;
         text-align: center;
-        padding: 1mm;
+        padding: 0.8mm;
     }
     table.tabla-historial td.th-sub {
         background: #EDEDED;
@@ -637,8 +639,8 @@
 
     <table class="tabla-historial">
         <colgroup>
-            <col style="width:19mm;"><col style="width:13.1mm;"><col style="width:13.1mm;">
-            <col style="width:13.1mm;"><col style="width:13.1mm;"><col style="width:13.1mm;">
+            <col style="width:22mm;"><col style="width:14.2mm;"><col style="width:14.2mm;">
+            <col style="width:14.2mm;"><col style="width:14.2mm;"><col style="width:14.2mm;">
         </colgroup>
         <tr><td colspan="6" class="th-seccion">DATOS MÉDICOS / OCUPACIONALES</td></tr>
         <tr>
