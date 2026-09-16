@@ -3,12 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <style>
-    @page {
-        size: A4 landscape;
-        margin: 12mm 12mm 16mm 12mm;
-        @bottom-left { content: "SNS-MSP- Form. HCU. 083 / 2019"; font-family: 'Arial', 'Open Sans', sans-serif; font-size: 9px; font-weight: bold; color: #000; }
-        @bottom-right { content: "REGISTRO DE INMUNIZACIONES PARA SALUD EN EL TRABAJO"; font-family: 'Arial', 'Open Sans', sans-serif; font-size: 9px; font-weight: bold; color: #000; }
-    }
+    @page { size: A4 landscape; margin: 12mm; }
     body { font-family: 'Arial', 'Open Sans', sans-serif; font-size: 9px; margin: 0; padding: 0; color: #000; }
     table { width: 100%; border-collapse: collapse; }
     th, td { border: 1px solid #000; padding: 3px 4px; text-align: center; vertical-align: middle; }
@@ -17,6 +12,7 @@
     .subseccion-title td { text-align: left; font-weight: normal; background-color: #ffffff; }
     .vacuna-col { background-color: #ccffff; }
     .nota-pie { font-size: 8px; text-align: left; padding: 4px; }
+    .pie-formulario { display: flex; justify-content: space-between; font-size: 10px; font-weight: bold; margin-top: 10mm; padding: 6px 4px 0 4px; break-inside: avoid; page-break-inside: avoid; }
     thead { display: table-header-group; }
     tbody.grupo-vacuna { break-inside: avoid; page-break-inside: avoid; }
     tr.subseccion-title { break-after: avoid; page-break-after: avoid; }
@@ -116,5 +112,9 @@
     {% endif %}
 </table>
 <div class="nota-pie">La vacuna contra la Fiebre Amarilla es obligatoria para quien viva o se desplace en la Región Amazónica, su aplicación es hasta los 59 años de edad.</div>
+<div class="pie-formulario">
+    <span>SNS-MSP- Form. HCU. 083 / 2019</span>
+    <span>REGISTRO DE INMUNIZACIONES PARA SALUD EN EL TRABAJO</span>
+</div>
 </body>
 </html>
