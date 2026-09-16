@@ -1,11 +1,13 @@
 import unicodedata
+from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
 import weasyprint
 
 env = Environment(loader=FileSystemLoader("templates_html"))
 
 # ==========================================
-# ESQUEMA FIJO DE LA SECCIÓN B (Formulario 083)
+# ESQUEMA FIJO DE LA SECCIÓN B (Formulario 083) — exactamente estas 6, siempre en
+# este orden y siempre impresas aunque no haya datos (relleno en blanco).
 # clave_normalizada -> (etiqueta_a_mostrar, base_por_defecto, bases_por_tipo_vacuna)
 # bases_por_tipo_vacuna es None si el esquema no depende de TipoVacuna
 # ==========================================
@@ -13,14 +15,22 @@ FIXED_SCHEMES = [
     ("DIFTERIA Y TETANOS", "Tétanos - Difteria", 5, {"1 DOSIS": 1, "5 DOSIS": 5}),
     ("HEPATITIS A", "Hepatitis A", 3, None),
     ("HEPATITIS B", "Hepatitis B", 3, None),
-    ("HEPATITIS A Y B COMBINADA", "Hepatitis A y B (combinada)", 3, None),
-    ("TIFOIDEA", "Tifoidea", 1, None),
-    ("TETANOS", "Tétanos", 5, None),
     ("INFLUENZA", "Influenza estacionaria", 1, None),
     ("FIEBRE AMARILLA", "Fiebre Amarilla", 1, None),
     ("SARAMPION RUBEOLA", "Sarampión-Rubéola", 2, None),
 ]
 FIXED_KEYS = {clave for clave, *_ in FIXED_SCHEMES}
+
+# Vacunas que van en "INMUNIZACIONES DE ACUERDO AL TIPO DE EMPRESA Y RIESGO" (no en la
+# sección fija del Form 083) pero que igual siguen un esquema de dosis base + refuerzos
+# (a diferencia de COVID y otras 100% dinámicas, que solo cuentan 1°, 2°, 3°... sin
+# concepto de refuerzo). Solo se muestran si el paciente tiene registros de esa vacuna.
+ESQUEMAS_TOPE_DINAMICOS = [
+    ("HEPATITIS A Y B COMBINADA", "Hepatitis A y B (combinada)", 3, None),
+    ("TIFOIDEA", "Tifoidea", 1, None),
+    ("TETANOS", "Tétanos", 5, None),
+]
+ESQUEMAS_TOPE_KEYS = {clave for clave, *_ in ESQUEMAS_TOPE_DINAMICOS}
 
 
 def _normalizar(texto: str) -> str:
@@ -73,6 +83,20 @@ def _extraer_dosis(vac: dict) -> list:
     return filas
 
 
+def _dosis_del_anio_en_curso(filas: list) -> list:
+    """Influenza es estacional: en el registro puede haber hasta una dosis por año
+    (varias en total), pero al Pasaporte solo le interesa la del año en curso. Se busca
+    la fila cuya fecha (formato YYYY/MM/DD, ver _extraer_dosis) cae en el año actual; si
+    no hay ninguna, se devuelve vacío (no se muestra ninguna dosis vieja ni la más
+    reciente por defecto)."""
+    anio_actual = str(datetime.now().year)
+    for fila in filas:
+        fecha = fila.get("fecha") or ""
+        if fecha[:4] == anio_actual:
+            return [fila]
+    return []
+
+
 def _armar_grupo_fijo(nombre_mostrar: str, base: int, filas: list) -> dict:
     """Construye siempre 'base' filas (rellenando en blanco las que falten) y agrega
     cualquier fila extra como 'Refuerzo N'. Marca 'esquema_completo' en la fila que cierra
@@ -94,8 +118,8 @@ def _armar_grupo_fijo(nombre_mostrar: str, base: int, filas: list) -> dict:
 
 
 def _armar_grupo_dinamico(vac: dict) -> dict:
-    """Vacunas fuera del esquema fijo (COVID, TETANOS solo, HEPATITIS A Y B COMBINADA,
-    TIFOIDEA, etc.): tantas filas como dosis con fecha real tenga, sin relleno ni tope."""
+    """Vacunas totalmente fuera de cualquier esquema conocido (COVID, etc.): tantas
+    filas como dosis con fecha real tenga, sin relleno ni tope ni concepto de refuerzo."""
     filas = _extraer_dosis(vac)
     if not filas:
         filas = [{"fecha": "", "lote": "", "responsable": "", "establecimiento": "", "observacion": ""}]
@@ -108,16 +132,21 @@ def _armar_grupo_dinamico(vac: dict) -> dict:
 
 def construir_seccion_b(vacunas: list) -> tuple:
     """Separa las vacunas recibidas en (grupos_fijos, grupos_dinamicos), respetando el
-    orden fijo del Form 083 para la primera sección. TETANOS (solo) tiene su propia clave
-    fija (base 5 dosis) separada de DIFTERIA Y TETANOS (base 5 con bases_por_tipo) — son
-    esquemas distintos que no se fusionan entre sí."""
+    orden fijo del Form 083 para la primera sección (siempre esas 6, aunque no haya
+    datos). HEPATITIS A Y B COMBINADA, TIFOIDEA y TETANOS (solo) usan el mismo esquema de
+    dosis base + refuerzos que la sección fija, pero se listan en "de acuerdo al tipo de
+    empresa y riesgo" y solo si el paciente tiene registros — no se fusionan con
+    DIFTERIA Y TETANOS ni con las demás."""
     por_clave = {}
+    por_clave_tope = {}
     dinamicas = []
 
     for vac in vacunas:
         clave = _normalizar(vac.get("NombreVacuna", ""))
         if clave in FIXED_KEYS:
             por_clave.setdefault(clave, []).append(vac)
+        elif clave in ESQUEMAS_TOPE_KEYS:
+            por_clave_tope.setdefault(clave, []).append(vac)
         else:
             dinamicas.append(vac)
 
@@ -130,9 +159,24 @@ def construir_seccion_b(vacunas: list) -> tuple:
             filas.extend(_extraer_dosis(vac))
             if bases_por_tipo and vac.get("TipoVacuna") in bases_por_tipo:
                 base = bases_por_tipo[vac["TipoVacuna"]]
+        if clave == "INFLUENZA":
+            filas = _dosis_del_anio_en_curso(filas)
         grupos_fijos.append(_armar_grupo_fijo(etiqueta, base, filas))
 
-    grupos_dinamicos = [_armar_grupo_dinamico(vac) for vac in dinamicas]
+    grupos_dinamicos = []
+    for clave, etiqueta, base_defecto, bases_por_tipo in ESQUEMAS_TOPE_DINAMICOS:
+        vacs_de_esta_clave = por_clave_tope.get(clave, [])
+        if not vacs_de_esta_clave:
+            continue
+        filas = []
+        base = base_defecto
+        for vac in vacs_de_esta_clave:
+            filas.extend(_extraer_dosis(vac))
+            if bases_por_tipo and vac.get("TipoVacuna") in bases_por_tipo:
+                base = bases_por_tipo[vac["TipoVacuna"]]
+        grupos_dinamicos.append(_armar_grupo_fijo(etiqueta, base, filas))
+
+    grupos_dinamicos.extend(_armar_grupo_dinamico(vac) for vac in dinamicas)
     return grupos_fijos, grupos_dinamicos
 
 
