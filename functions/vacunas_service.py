@@ -13,6 +13,9 @@ FIXED_SCHEMES = [
     ("DIFTERIA Y TETANOS", "Tétanos - Difteria", 5, {"1 DOSIS": 1, "5 DOSIS": 5}),
     ("HEPATITIS A", "Hepatitis A", 3, None),
     ("HEPATITIS B", "Hepatitis B", 3, None),
+    ("HEPATITIS A Y B COMBINADA", "Hepatitis A y B (combinada)", 3, None),
+    ("TIFOIDEA", "Tifoidea", 1, None),
+    ("TETANOS", "Tétanos", 5, None),
     ("INFLUENZA", "Influenza estacionaria", 1, None),
     ("FIEBRE AMARILLA", "Fiebre Amarilla", 1, None),
     ("SARAMPION RUBEOLA", "Sarampión-Rubéola", 2, None),
@@ -21,11 +24,13 @@ FIXED_KEYS = {clave for clave, *_ in FIXED_SCHEMES}
 
 
 def _normalizar(texto: str) -> str:
-    """Mayúsculas, sin tildes, sin guiones ni espacios duplicados. Para comparar nombres de vacuna."""
+    """Mayúsculas, sin tildes, sin guiones/paréntesis ni espacios duplicados. Para comparar
+    nombres de vacuna (p.ej. "HEPATITIS A Y B (COMBINADA)" debe calzar con la clave fija
+    "HEPATITIS A Y B COMBINADA")."""
     texto = (texto or "").strip().upper()
     texto = unicodedata.normalize("NFKD", texto)
     texto = "".join(c for c in texto if not unicodedata.combining(c))
-    texto = texto.replace("-", " ")
+    texto = texto.replace("-", " ").replace("(", " ").replace(")", " ")
     return " ".join(texto.split())
 
 
@@ -103,8 +108,9 @@ def _armar_grupo_dinamico(vac: dict) -> dict:
 
 def construir_seccion_b(vacunas: list) -> tuple:
     """Separa las vacunas recibidas en (grupos_fijos, grupos_dinamicos), respetando el
-    orden fijo del Form 083 para la primera sección. TETANOS (solo) NO se fusiona con
-    DIFTERIA Y TETANOS: al no estar en FIXED_KEYS, cae directo a grupos_dinamicos."""
+    orden fijo del Form 083 para la primera sección. TETANOS (solo) tiene su propia clave
+    fija (base 5 dosis) separada de DIFTERIA Y TETANOS (base 5 con bases_por_tipo) — son
+    esquemas distintos que no se fusionan entre sí."""
     por_clave = {}
     dinamicas = []
 
