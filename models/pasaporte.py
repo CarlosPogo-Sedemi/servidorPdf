@@ -129,6 +129,7 @@ class RegistroCompetencia(BaseModel):
     AutoraEmisora: Optional[str] = None
     FechaEmision: Optional[str] = None
     FechaVencimiento: Optional[str] = None
+    tipoCertificado: Optional[str] = None
 
 
 class DatosPasaporte(BaseModel):

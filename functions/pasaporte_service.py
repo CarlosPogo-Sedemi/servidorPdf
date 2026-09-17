@@ -107,17 +107,13 @@ def generar_pdf_pasaporte(payload: dict) -> bytes:
         "contacto2_numero": dt.get("NumeroContacto2") or "",
     }
 
-    # Power Apps envía aquí su colección de Certificados (colCertificado),
-    # no cursos de inducción/capacitación: NombreCertificado -> nombre del
-    # curso, AutoraEmisora -> nombre del instructor. No hay dato de
-    # Inducción/Capacitación, así que 'tipo' queda vacío (ningún checkbox
-    # marcado).
+    TIPO_MAP = {"INDUCCION": "Inducción", "CAPACITACION": "Capacitación"}
     competencias = []
     for c in (data.get("Competencias") or []):
         nombre_curso = c.get("NombreCertificado") or ""
         nombre_instructor = c.get("AutoraEmisora") or ""
         competencias.append({
-            "tipo": "",
+            "tipo": TIPO_MAP.get((c.get("tipoCertificado") or "").strip().upper(), ""),
             "nombre_curso": nombre_curso,
             "nombre_curso_size": _tamano_dinamico(nombre_curso, base=7.0, minimo=4.8, umbral=30, tope=110),
             "nombre_instructor": nombre_instructor,
