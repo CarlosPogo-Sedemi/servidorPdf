@@ -108,12 +108,18 @@ def generar_pdf_pasaporte(payload: dict) -> bytes:
     }
 
     TIPO_MAP = {"INDUCCION": "Inducción", "CAPACITACION": "Capacitación"}
+    AREA_ICONOS = {
+    "SALUD": "icono_salud.png",
+    "SEGURIDAD INDUSTRIAL": "icono_seguridad.png",
+    "AMBIENTE": "icono_ambiente.png",
+    }
     competencias = []
     for c in (data.get("Competencias") or []):
         nombre_curso = c.get("NombreCertificado") or ""
         nombre_instructor = c.get("AutoraEmisora") or ""
         competencias.append({
             "tipo": TIPO_MAP.get((c.get("tipoCertificado") or "").strip().upper(), ""),
+            "area_icono": AREA_ICONOS.get((c.get("areaImparte") or "").strip().upper(), ""),
             "nombre_curso": nombre_curso,
             "nombre_curso_size": _tamano_dinamico(nombre_curso, base=7.0, minimo=4.8, umbral=30, tope=110),
             "nombre_instructor": nombre_instructor,
@@ -121,6 +127,7 @@ def generar_pdf_pasaporte(payload: dict) -> bytes:
             "expedicion": _fecha(c.get("FechaEmision")),
             "vencimiento": _fecha(c.get("FechaVencimiento")),
         })
+        
 
     # EmpleadoMes y BuenasPracticas comparten la misma forma (Mes/Actividad)
     # en el JSON; solo cambia a qué etiqueta del PDF va "Actividad" y no

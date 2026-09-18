@@ -130,6 +130,7 @@ class RegistroCompetencia(BaseModel):
     FechaEmision: Optional[str] = None
     FechaVencimiento: Optional[str] = None
     tipoCertificado: Optional[str] = None
+    areaImparte: Optional[str] = None
 
 
 class DatosPasaporte(BaseModel):

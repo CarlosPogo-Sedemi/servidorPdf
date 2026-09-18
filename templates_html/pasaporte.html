@@ -787,6 +787,7 @@
             <td class="valor-tc">{{ c.get('expedicion', '') }}</td>
             <td rowspan="2">
                 FIRMA/SELLO DEL INSTRUCTOR
+                {% if c.get('area_icono') %}<img src="assets/pasaporte/{{ c.area_icono }}" style="display:block; margin:1mm auto 0; max-width:13mm; max-height:9mm;">{% endif %}
                 {% if c.get('firma_sello_base64') %}<br><img src="{{ c.get('firma_sello_base64') }}" style="max-width:20mm; max-height:8mm;">{% endif %}
             </td>
         </tr>
