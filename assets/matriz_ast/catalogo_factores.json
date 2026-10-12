@@ -1,0 +1,382 @@
+{
+  "Atrapamiento en instalaciones": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": ""
+  },
+  "Atrapamiento por o entre objetos": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": "Es la situación que se produce cuando un operario o parte de su cuerpo es aprisionado contra las partes de las máquinas o vehículos que, debido a condiciones inseguras, han perdido su estabilidad."
+  },
+  "Atrapamiento por vuelco de máquinas o carga": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": "El trabajador queda atrapado por el vuelco de tractores, carretillas, vehículos o máquinas."
+  },
+  "Atropello o golpe con vehículo": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": "Comprende los atropellos de trabajadores por vehículos que circulen por el área en la que se encuentre laborando"
+  },
+  "Cables electricos expuestos": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": ""
+  },
+  "Caída de personas al mismo nivel": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": "Caída en un lugar de paso o una superficie de trabajo.\nCaída sobre o contra objetos.\nTipo de suelo inestable o deslizante."
+  },
+  "Caídas manipulación de objetos": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": "Considera riesgos de accidentes por caídas de materiales, herramientas, aparatos, etc., que se estén manejando o transportando manualmente o con ayudas mecánicas, siempre que el accidentado sea el trabajador que este manipulando el objeto que cae."
+  },
+  "Choque contra objetos inmóviles o superficies": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": "Interviene el trabajador como parte dinámica y choca, golpea, roza o raspa sobre un objeto inmóvil.\nÁreas de trabajo no delimitadas, no señalizadas y con visibilidad insuficiente."
+  },
+  "Choque contra objetos móviles": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": "Falta de diferenciación entre los pasillos definidos para el tráfico de personas y los destinados al paso de vehículos."
+  },
+  "Choques de objetos desprendidos o superficies": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": "Considera el riesgo de accidente por caídas de herramientas, objetos, aparatos o materiales sobre el trabajador que no los está manipulando.\nFalta de resistencia en estanterías y estructuras de apoyo para almacenamiento.\nInestabilidad de los apilamientos de materiales."
+  },
+  "Contactos eléctricos directos": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": ""
+  },
+  "Contactos eléctricos indirectos": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": "Aquellos en los que la persona entra en contacto con algún elemento que no forma parte del circuito eléctrico y que, en condiciones normales, no debería tener tensión, pero que la adquirido accidentalmente (envolvente, órganos de mando, etc.)"
+  },
+  "Contactos térmicos": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": ""
+  },
+  "Cortes en extremidades": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": ""
+  },
+  "Desplome derrumbamiento": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": "Comprende los desplomes, total o parcial, de edificios, muros, andamios, escaleras, materiales apilados, etc. y los derrumbamientos de masas de tierra, rocas, aludes, etc."
+  },
+  "Equipos a presión (cilindros)": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": ""
+  },
+  "Escaleras en mal estado": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": ""
+  },
+  "Espacios confinados": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": ""
+  },
+  "Existe electricidad estática": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": ""
+  },
+  "Existen elementos cortantes": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": "Herramientas de filos cortantes"
+  },
+  "Existen gradas o alturas sin pasamanos": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": ""
+  },
+  "Herramienta defectuosa": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": ""
+  },
+  "Manejo de herramientas cortopunzantes": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": ""
+  },
+  "Manejo de herramientas manuales": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": "Comprende los cortes y punzamientos que el trabajador recibe por acción de un objeto o herramienta, siempre que sobre estos actúen otras fuerzas diferentes a la gravedad, se incluye martillazos, cortes con tijeras, cuchillos, filos y punzamientos con: agujas, cepillos, púas, otros"
+  },
+  "Manejo herramientas motorizadas (eléctricas; neumáticas; de combustible; hidráulicas; de vapor)": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": "maquinaria eléctrica , neumáticas, de combustión, hidráulicas, vapor"
+  },
+  "Maquinaria sin mantenimiento": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": ""
+  },
+  "Máquinas sin protección": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": ""
+  },
+  "Orden y Limpieza": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": "La falta de orden que pueda producir una caída o tropezón del personal que labora en un área determinada"
+  },
+  "Pisos con huecos; agrietados; humedos": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": ""
+  },
+  "Plataformas de trabajo": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": ""
+  },
+  "Proyección de partículas": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": "Circunstancia que se puede manifestar en lesiones producidas por piezas, fragmentos o pequeñas partículas de material, proyectadas por una máquina, herramientas o materia prima a conformar."
+  },
+  "Punzamiento extremidades inferiores": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": "Incluye los accidentes que son consecuencia de pisadas sobre objetos cortantes o punzantes (clavos, chinchetas, chapas, etc.) pero que no originan caídas."
+  },
+  "Se opera maquinarias y equipos (motores; bombas)": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": "Maquinaria a motor , bombas"
+  },
+  "Superficies irregulares (pisos resbalosos o en mal estado)": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": ""
+  },
+  "Tableros eléctricos deteriorados": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": ""
+  },
+  "Trabajo en Alturas": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": ""
+  },
+  "Vehículo en mal estado": {
+    "clasificacion": "DE SEGURIDAD",
+    "descripcion": ""
+  },
+  "Alteraciones en la salud por exposición a presiones anormales": {
+    "clasificacion": "FÍSICOS",
+    "descripcion": ""
+  },
+  "Estrés Térmico": {
+    "clasificacion": "FÍSICOS",
+    "descripcion": "Variaciones de temperatura y humedad en las áreas de trabajo"
+  },
+  "Existen campos magnéticos": {
+    "clasificacion": "FÍSICOS",
+    "descripcion": ""
+  },
+  "Exposición a radiación solar": {
+    "clasificacion": "FÍSICOS",
+    "descripcion": ""
+  },
+  "Exposición a temperaturas extremas (frío o calor)": {
+    "clasificacion": "FÍSICOS",
+    "descripcion": ""
+  },
+  "Humedad relativa del ambiente": {
+    "clasificacion": "FÍSICOS",
+    "descripcion": ""
+  },
+  "Iluminación": {
+    "clasificacion": "FÍSICOS",
+    "descripcion": "Según el tipo de trabajo a realizar se necesita un determinado nivel de iluminación. Un bajo nivel de iluminación, además de causar daño a la visión, contribuye a aumentar el riesgo de accidentes."
+  },
+  "Presiones anormales": {
+    "clasificacion": "FÍSICOS",
+    "descripcion": ""
+  },
+  "Radiación ionizante": {
+    "clasificacion": "FÍSICOS",
+    "descripcion": ""
+  },
+  "Radiación no ionizante": {
+    "clasificacion": "FÍSICOS",
+    "descripcion": "Son radiaciones electromagnéticas que no producen ionización.\nSe presentan en: Hornos microondas. Secaderos industriales.\nEmisiones de radiofrecuencia. Soldadura. Salas de esterilización.\nFusión de metales. Aplicación del láser."
+  },
+  "Ruido": {
+    "clasificacion": "FÍSICOS",
+    "descripcion": "El ruido es un contaminante físico que se transmite por el aire mediante un movimiento ondulatorio.\nSe genera ruido en: Máquinas eléctricas CNC y Máquinas herrameintas en general (torno, fresadora, cepilladora).\nEscapes de aire comprimido. Rozamientos o impactos de partes metálicas."
+  },
+  "Ventilación": {
+    "clasificacion": "FÍSICOS",
+    "descripcion": "Las actividades del puesto de trabajo son realizadas en un ambiente cerrado con poca ventilación, las áres son calurosas que puede dar lugar a fatiga y aun deterioro o falta de productividad del trabajo realizado."
+  },
+  "Vibraciones": {
+    "clasificacion": "FÍSICOS",
+    "descripcion": "La exposición a vibraciones se produce cuando se transmite a alguna parte del cuerpo el movimiento oscilante de una máquina u herramienta.\nPuede causar disconfort, pérdida de precisión al ejecutar movimientos, pérdida de rendimiento debido a la fatiga, hasta alteraciones graves de la salud"
+  },
+  "Contacto con sustancias químicas": {
+    "clasificacion": "QUÍMICOS",
+    "descripcion": "Los contaminantes químicos son sustancias de naturaleza química en forma sólida, líquida o gaseosa que penetran en el cuerpo del trabajador por vía dérmica, digestiva, respiratoria o parenteral. El riesgo viene definido por la dosis que a su vez se define en función del tiempo de exposición y de la concentración de dicha sustancia en el ambiente de trabajo."
+  },
+  "Exposición a polvo inorgánico (mineral o metálicos)": {
+    "clasificacion": "QUÍMICOS",
+    "descripcion": "Presencia de polvo mineral o metálicos en el ambiente de trabajo"
+  },
+  "Manejo de Explosivos": {
+    "clasificacion": "QUÍMICOS",
+    "descripcion": ""
+  },
+  "Manejo de productos inflamables": {
+    "clasificacion": "QUÍMICOS",
+    "descripcion": ""
+  },
+  "Manipulación de productos químicos sólidos o líquidos especificar": {
+    "clasificacion": "QUÍMICOS",
+    "descripcion": ""
+  },
+  "Presencia de gases de soldadura": {
+    "clasificacion": "QUÍMICOS",
+    "descripcion": "Ambiente de trabajo u actividad realizada presencia de gases de suelda"
+  },
+  "Presencia de humos metálicos": {
+    "clasificacion": "QUÍMICOS",
+    "descripcion": "presencia de humos metálicos de actividades de soldadura"
+  },
+  "Presencia de Nieblas Neblinas (aerosoles)": {
+    "clasificacion": "QUÍMICOS",
+    "descripcion": ""
+  },
+  "Presencia de polvo orgánico": {
+    "clasificacion": "QUÍMICOS",
+    "descripcion": ""
+  },
+  "Presencia de vapores especificar": {
+    "clasificacion": "QUÍMICOS",
+    "descripcion": ""
+  },
+  "Animales Peligrosos": {
+    "clasificacion": "BIOLÓGICOS",
+    "descripcion": ""
+  },
+  "Animales venenosos y ponzoñosos": {
+    "clasificacion": "BIOLÓGICOS",
+    "descripcion": ""
+  },
+  "Presencia de vectores": {
+    "clasificacion": "BIOLÓGICOS",
+    "descripcion": ""
+  },
+  "Virus; bacterias; hongos y parásitos": {
+    "clasificacion": "BIOLÓGICOS",
+    "descripcion": "Son contaminantes constituidos por seres vivos. Son los microorganismos patógenos para el hombre.\nEstos microorganismos pueden estar presentes en puestos de trabajo de laboratorios de microbiología y hematología,Etc."
+  },
+  "Calidad de aire interior": {
+    "clasificacion": "ERGONÓMICOS",
+    "descripcion": ""
+  },
+  "Dimensiones de puestos de trabajo": {
+    "clasificacion": "ERGONÓMICOS",
+    "descripcion": ""
+  },
+  "Disconfort térmico; acústico y lumínico": {
+    "clasificacion": "ERGONÓMICOS",
+    "descripcion": "El confort térmico depende del calor producido por el cuerpo y de los intercambios entre éste y el medio ambiente."
+  },
+  "Manipulación de cargas": {
+    "clasificacion": "ERGONÓMICOS",
+    "descripcion": "La carga física del trabajo se produce como consecuencia de las actividades físicas que se realizan para la consecución de dicha tarea. Consecuencia directa de una carga física excesiva será la fatiga muscular, que se traducirá en patología osteomuscular, aumento del riesgo de accidente, disminución de la productividad y calidad del trabajo, en un aumento de la insatisfacción personal o en inconfort."
+  },
+  "Movimientos Repetitivos": {
+    "clasificacion": "ERGONÓMICOS",
+    "descripcion": "Grupo de movimientos continuos, mantenidos durante un trabajo que implica al mismo conjunto osteo muscular provocando en el mismo fatiga muscular, sobrecarga, dolor y por último lesión"
+  },
+  "Posición forzada de pie": {
+    "clasificacion": "ERGONÓMICOS",
+    "descripcion": "La carga física del trabajo se produce como consecuencia de las actividades físicas que se realizan para la consecución de dicha tarea. Consecuencia directa de una carga física excesiva será la fatiga muscular, que se traducirá en patología osteomuscular, aumento del riesgo de accidente, disminución de la productividad y calidad."
+  },
+  "Posición forzada sentada": {
+    "clasificacion": "ERGONÓMICOS",
+    "descripcion": ""
+  },
+  "Posturas Incorrectas en el trabajo": {
+    "clasificacion": "ERGONÓMICOS",
+    "descripcion": "La carga física del trabajo se produce como consecuencia de las actividades físicas que se realizan para la consecución de dicha tarea. Consecuencia directa de una carga física excesiva será la fatiga muscular, que se traducirá en patología osteomuscular, aumento del riesgo de accidente, disminución de la productividad y calidad."
+  },
+  "Puesto de trabajo con Pantalla de Visualización de Datos (PVD)": {
+    "clasificacion": "ERGONÓMICOS",
+    "descripcion": ""
+  },
+  "Sobreesfuerzo": {
+    "clasificacion": "ERGONÓMICOS",
+    "descripcion": "Riesgos originados por el manejo de cargas pesadas o por movimientos mal realizados:\nAl levantar objetos. Al estirar o empujar objetos.\nAl manejar o lanzar objetos"
+  },
+  "Agresión o maltrato (palabra y obra)": {
+    "clasificacion": "PSICOSOCIALES",
+    "descripcion": "Se habla de violencia laboral cuando el personal de un centro de trabajo sufre abusos, amenazas o ataques en circunstancias relacionadas con su actividad laboral, que pongan en peligro, implícita o explícitamente, su seguridad, su bienestar o su salud (física y/o psíquica)."
+  },
+  "Alta responsabilidad": {
+    "clasificacion": "PSICOSOCIALES",
+    "descripcion": ""
+  },
+  "Amenaza delincuencial": {
+    "clasificacion": "PSICOSOCIALES",
+    "descripcion": "La conducta antisocial y delictiva hace parte de\nlos comportamientos que mayor impacto tienen\nsobre los seres humanos"
+  },
+  "Autonomía": {
+    "clasificacion": "PSICOSOCIALES",
+    "descripcion": ""
+  },
+  "Déficit en la comunicación": {
+    "clasificacion": "PSICOSOCIALES",
+    "descripcion": "Aislamiento físico o social, escasas relaciones con los jefes, conflictos\ninterpersonales, falta de apoyo social"
+  },
+  "Definición del Rol": {
+    "clasificacion": "PSICOSOCIALES",
+    "descripcion": "Definimos «rol» o «papel» del trabajador, en la empresa, como el conjunto de expectativas de conducta asociadas al puesto de trabajo\nEs el patrón de comportamiento, esperado de la persona que desempeña un trabajo, independientemente de la persona que lo ocupe."
+  },
+  "Desarraigo familiar": {
+    "clasificacion": "PSICOSOCIALES",
+    "descripcion": ""
+  },
+  "Desmotivación": {
+    "clasificacion": "PSICOSOCIALES",
+    "descripcion": "Escasa valoración social del trabajo, inseguridad en el trabajo,\nfalta o exceso de promoción"
+  },
+  "Falta de reconocimiento": {
+    "clasificacion": "PSICOSOCIALES",
+    "descripcion": "Consiste en el resultado de un proceso de estrés crónico laboral y organizacional que termina en un estado de agotamiento emocional y de fatiga desmotivante para las tareas laborales."
+  },
+  "Inadecuada supervisión": {
+    "clasificacion": "PSICOSOCIALES",
+    "descripcion": "Baja participación en la toma de decisiones, baja capacidad de control\nsobre la carga de trabajo, y otros factores laborales"
+  },
+  "Inestabilidad emocional": {
+    "clasificacion": "PSICOSOCIALES",
+    "descripcion": ""
+  },
+  "Inestabilidad en el empleo": {
+    "clasificacion": "PSICOSOCIALES",
+    "descripcion": ""
+  },
+  "Manifestaciones psicosomáticas": {
+    "clasificacion": "PSICOSOCIALES",
+    "descripcion": "Fatiga, dolor de espalda, dolor de cabeza, problemas para dormir, debilidad, dolor en articulaciones y en estómago."
+  },
+  "Minuciosidad de la tarea": {
+    "clasificacion": "PSICOSOCIALES",
+    "descripcion": ""
+  },
+  "Relaciones interpersonales inadecuadas o deterioradas": {
+    "clasificacion": "PSICOSOCIALES",
+    "descripcion": "Demandas conflictivas entre trabajo y familia, bajo apoyo familiar,\nproblemas duales de carrera"
+  },
+  "Ritmo de trabajo": {
+    "clasificacion": "PSICOSOCIALES",
+    "descripcion": "Los ritmos de trabajo intensos producen mayor demanda de esfuerzo mental, por lo que son fuente de fatiga. La\nfatiga mental altera la eficacia a la hora del desempeño de las tareas, pues reduce la concentración y el nivel de atención."
+  },
+  "Sobrecarga mental": {
+    "clasificacion": "PSICOSOCIALES",
+    "descripcion": ".\nCarga de trabajo excesivo o insuficiente, presión de tiempos, plazos estrictos"
+  },
+  "Trabajo a presión": {
+    "clasificacion": "PSICOSOCIALES",
+    "descripcion": "El estrés es un fenómeno cada vez más frecuente y con consecuencias importantes,\nya que puede afectar al bienestar físico y psicológico de la persona"
+  },
+  "Trabajo monótono": {
+    "clasificacion": "PSICOSOCIALES",
+    "descripcion": "Monotonía, tareas sin sentido, fragmentación, falta de variedad, tareas desagradables, por las que se siente rechazo."
+  },
+  "Trabajo nocturno": {
+    "clasificacion": "PSICOSOCIALES",
+    "descripcion": "La organización del trabajo en equipo a turno cerrado y\npor las alteraciones de la vida personal, (física\ny psíquica) familiar y social que éste conlleva."
+  },
+  "Turnos rotativos": {
+    "clasificacion": "PSICOSOCIALES",
+    "descripcion": ""
+  }
+}

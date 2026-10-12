@@ -66,6 +66,10 @@ Endpoints:
   más abajo). Nota: los `templates/PASAPORTE_SEGURIDAD*.docx` en `templates/` son versiones
   previas del intento DOCX para este mismo documento; el pipeline vigente es este de PDF/HTML,
   no `generar-reporte`.
+- `POST /api/v1/generar-excel-matriz-ast/` (`routers/matriz_ast.py` → `functions/matriz_ast_service.py`
+  + `functions/matriz_ast_excel.py`) — genera el Excel FOR SEI 02 (Matriz de riesgos por puesto,
+  método INSST) con openpyxl desde la columna MATRIZ_RIESGOS de AST_PUESTO_TRABAJO. Reglas y colores
+  en `functions/matriz_ast_config.py`; descripciones por factor en `assets/matriz_ast/catalogo_factores.json`.
 - `GET /api/v1/ping/` (`routers/utils.py`) — salud / keep-alive.
 
 ### Pipeline DOCX (la parte delicada)

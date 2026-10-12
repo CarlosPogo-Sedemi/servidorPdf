@@ -8,3 +8,4 @@ docxtpl==0.20.2
 pillow==12.2.0
 python-dotenv==1.2.2
 weasyprint==64.0
+openpyxl==3.1.5
