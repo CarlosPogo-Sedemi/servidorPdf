@@ -82,14 +82,6 @@ def nivel_por_valoracion(v: Optional[float]) -> str:
     return "Intolerable"
 
 
-def nivel_por_matriz(probabilidad: Optional[int], consecuencia: Optional[int]) -> str:
-    """P (4-12) -> Baja (4) / Media (5-8) / Alta (9-12); C (1-3) -> LD / D / ED."""
-    if not probabilidad or consecuencia not in (1, 2, 3):
-        return ""
-    fila = 0 if probabilidad <= 4 else 1 if probabilidad <= 8 else 2
-    return cfg.MATRIZ_NIVELES[fila][consecuencia - 1]
-
-
 def descripcion_item(item: Any) -> str:
     """Texto de un ítem de UTENSILIOS / MATERIALES / EQUIPOS (estructura variable)."""
     if isinstance(item, str):
@@ -111,11 +103,17 @@ def descripcion_item(item: Any) -> str:
 @lru_cache(maxsize=1)
 def _jerarquia() -> dict:
     with open(cfg.ASSETS_DIR / "jerarquia_medidas.json", encoding="utf-8") as fh:
-        return json.load(fh).get("medidas", {})
+        return json.load(fh)
 
 
-def jerarquia_de(medida: str) -> str:
-    return _jerarquia().get(normalizar(sin_numeracion(medida)), cfg.JERARQUIA_DEFECTO)
+def jerarquia_de(medida: str, factor: str = "") -> str:
+    """Primero por factor + medida (una misma medida puede clasificarse distinto según el factor);
+    si no existe, solo por el texto de la medida; si tampoco, el valor por defecto."""
+    cat = _jerarquia()
+    m = normalizar(sin_numeracion(medida))
+    return (cat.get("por_factor", {}).get(f"{normalizar(factor)}|{m}")
+            or cat.get("medidas", {}).get(m)
+            or cfg.JERARQUIA_DEFECTO)
 
 
 # ----------------------------------------------------------------------------
@@ -160,8 +158,8 @@ class Evaluacion:
 
     @property
     def nivel(self) -> str:
-        """Matriz de niveles: Probabilidad (B/M/A) x Consecuencias (LD/D/ED)."""
-        return nivel_por_matriz(self.probabilidad, self.i_consecuencias)
+        """Guía GERITRA, Paso 19: nivel según la VALORACIÓN (P x C)."""
+        return nivel_por_valoracion(self.valoracion)
 
 
 @dataclass
@@ -320,7 +318,7 @@ def construir(data: dict) -> MatrizGeritra:
 
         jer: dict[str, list[str]] = {k: [] for k, _ in cfg.JERARQUIA_COLUMNAS}
         for m in _medidas(mr):
-            jer[jerarquia_de(m)].append(legible(sin_numeracion(m)))
+            jer[jerarquia_de(m, mr.get("FactorRiesgo"))].append(legible(sin_numeracion(m)))
 
         quienes = [p for p in personas if act_n in p.actividades]
         riesgo = str(mr.get("ClasificacionFactor") or "").upper()

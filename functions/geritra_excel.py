@@ -149,27 +149,25 @@ def _encabezado(ws: Worksheet, m: MatrizGeritra) -> None:
         r = 3 + i
         celda(ws, f"L{r}:P{r}", lbl, bold=True, bg=cfg.COLOR_GRIS, al=L)
         celda(ws, f"Q{r}:U{r}", val, al=L)
-    # Leyenda: matriz de niveles de riesgo (Probabilidad x Consecuencias) + acción por nivel
+    # Leyenda según la Guía GERITRA: matriz del Paso 18 + tabla de niveles del Paso 19
     blanco = "FFFFFFFF"
-    celda(ws, "W3:AF3", "NIVELES DE RIESGO", bold=True, size=12, color=blanco, bg=cfg.COLOR_AZUL)
-    celda(ws, "W4:X5", "VALORACIÓN =\nPROBABILIDAD × CONSECUENCIAS", bold=True, size=8, bg=cfg.COLOR_GRIS)
-    celda(ws, "Y4:AA4", "CONSECUENCIAS", bold=True, size=10, bg=cfg.COLOR_GRIS)
-    for col, txt in zip(("Y", "Z", "AA"), ("Ligeramente dañino\nLD", "Dañino\nD", "Extremadamente dañino\nED")):
-        celda(ws, f"{col}5", txt, bold=True, size=9, bg=cfg.COLOR_GRIS)
-    celda(ws, "W6:W8", "PROBABILIDAD", bold=True, size=10, bg=cfg.COLOR_GRIS,
-          al=Alignment(horizontal="center", vertical="center", text_rotation=90, wrap_text=True))
-    for i, (prob, fila) in enumerate(zip(("Baja\nB", "Media\nM", "Alta\nA"), cfg.MATRIZ_NIVELES)):
-        r = 6 + i
-        celda(ws, f"X{r}", prob, bold=True, size=9, bg=cfg.COLOR_GRIS)
-        for col, nivel in zip(("Y", "Z", "AA"), fila):
-            celda(ws, f"{col}{r}", f"Riesgo {nivel.lower()}\n{cfg.CODIGO_NIVEL[nivel]}", bold=True, size=9,
-                  bg=cfg.COLOR_NIVEL[nivel])
-    celda(ws, "W9:AA9", cfg.NOTA_PROBABILIDAD, size=7, al=L)
-    celda(ws, "AB4:AF4", "ACCIÓN Y TEMPORIZACIÓN", bold=True, size=10, bg=cfg.COLOR_GRIS)
+    celda(ws, "W3:AH3", "NIVELES DE RIESGO", bold=True, size=12, color=blanco, bg=cfg.COLOR_AZUL)
+    celda(ws, "W4:X4", None, bg=cfg.COLOR_GRIS)
+    celda(ws, "Y4:AA4", "CONSECUENCIAS-SEVERIDAD", bold=True, size=10, bg=cfg.COLOR_GRIS)
+    celda(ws, "W5:X7", "PROBABILIDAD", bold=True, size=10, bg=cfg.COLOR_GRIS)
+    for i, fila in enumerate(cfg.MATRIZ_NIVELES):
+        r = 5 + i
+        for col, (nivel, rango) in zip(("Y", "Z", "AA"), fila):
+            celda(ws, f"{col}{r}", f"{nivel.upper()}\n{rango}", bold=True, size=9, bg=cfg.COLOR_NIVEL[nivel])
+    celda(ws, "W8:AA9", cfg.NOTA_VALORACION, size=8, al=L)
+    celda(ws, "AB4", "VALORES", bold=True, size=10, bg=cfg.COLOR_GRIS)
+    celda(ws, "AC4", "NIVEL DE RIESGO", bold=True, size=10, bg=cfg.COLOR_GRIS)
+    celda(ws, "AD4:AH4", "ACCIÓN Y TEMPORIZACIÓN", bold=True, size=10, bg=cfg.COLOR_GRIS)
     for i, nivel in enumerate(cfg.COLOR_NIVEL):
         r = 5 + i
-        celda(ws, f"AB{r}", f"{nivel.upper()} ({cfg.CODIGO_NIVEL[nivel]})", bold=True, size=9, bg=cfg.COLOR_NIVEL[nivel])
-        celda(ws, f"AC{r}:AF{r}", cfg.ACCION_NIVEL[nivel], size=8, al=L)
+        celda(ws, f"AB{r}", cfg.VALORES_NIVEL[nivel], bold=True, size=9, bg=cfg.COLOR_NIVEL[nivel])
+        celda(ws, f"AC{r}", nivel.upper(), bold=True, size=9, bg=cfg.COLOR_NIVEL[nivel])
+        celda(ws, f"AD{r}:AH{r}", cfg.ACCION_NIVEL[nivel], size=8, al=L)
     for r in range(4, 10):
         ws.row_dimensions[r].height = 34
 

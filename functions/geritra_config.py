@@ -14,11 +14,11 @@ SUBTITULO = "GERITRA · Una herramienta técnica para la gestión de seguridad y
 # ----------------------------------------------------------------------------
 RANGOS_NIVEL = [(5, "Trivial"), (9, "Tolerable"), (17, "Moderado"), (25, "Importante"), (37, "Intolerable")]
 
-COLOR_NIVEL = {
-    "Trivial": "FF92D050",
-    "Tolerable": "FFFFFF99",
+COLOR_NIVEL = {  # colores de la Guía del Usuario GERITRA (Pasos 18 y 19)
+    "Trivial": "FFFFFFCC",
+    "Tolerable": "FFFFFF00",
     "Moderado": "FFFFC000",
-    "Importante": "FFFF6600",
+    "Importante": "FFD9667A",
     "Intolerable": "FFFF0000",
 }
 
@@ -46,16 +46,15 @@ ACCION_NIVEL = {
 
 CODIGO_NIVEL = {"Trivial": "T", "Tolerable": "TO", "Moderado": "MO", "Importante": "I", "Intolerable": "IN"}
 
-# Matriz de niveles (filas: Baja, Media, Alta · columnas: LD, D, ED)
+# Guía GERITRA, Paso 18: matriz Probabilidad x Consecuencias-Severidad (rango de valoración por celda)
 MATRIZ_NIVELES = [
-    ["Trivial", "Tolerable", "Moderado"],
-    ["Tolerable", "Moderado", "Importante"],
-    ["Moderado", "Importante", "Intolerable"],
+    [("Trivial", "4"), ("Tolerable", "5 – 8"), ("Moderado", "9 – 16")],
+    [("Tolerable", "5 – 8"), ("Moderado", "9 – 16"), ("Importante", "17 – 24")],
+    [("Moderado", "9 – 16"), ("Importante", "17 – 24"), ("Intolerable", "25 – 36")],
 ]
-NOTA_PROBABILIDAD = (
-    "Probabilidad (P = Σ de los 4 índices, de 4 a 12): Baja = 4 · Media = 5 a 8 · Alta = 9 a 12. "
-    "Consecuencias: LD = 1 · D = 2 · ED = 3."
-)
+# Guía GERITRA, Paso 19: tabla de niveles de riesgo
+VALORES_NIVEL = {"Trivial": "4", "Tolerable": "5 – 8", "Moderado": "9 – 16", "Importante": "17 – 24", "Intolerable": "25 – 36"}
+NOTA_VALORACION = "Valoración (Paso 18) = Probabilidad (Σ de los 4 índices, 4 a 12) × Consecuencias (1 a 3). Nivel según la tabla de valores (Paso 19)."
 
 CONSECUENCIA_IDX = {"Ligeramente dañino": 1, "Dañino": 2, "Extremadamente dañino": 3}
 
