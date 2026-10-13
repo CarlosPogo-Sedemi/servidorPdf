@@ -291,29 +291,31 @@ def _promedios(ws: Worksheet, r: int, fin_datos: int) -> int:
 def _hoja_discapacidad(wb: Workbook, m: MatrizGeritra) -> None:
     ws = wb.create_sheet("PERSONAS CON DISCAPACIDAD")
     ws.sheet_view.showGridLines = False
-    anchos = {"A": 5, "B": 32, "C": 26, "D": 22, "E": 12, "F": 26, "G": 30, "H": 20, "I": 60}
+    anchos = {"A": 5, "B": 32, "C": 26, "D": 22, "E": 12, "F": 26, "G": 30, "H": 20, "I": 55, "J": 45}
     for k, v in anchos.items():
         ws.column_dimensions[k].width = v
-    celda(ws, "A1:I1", f"PERSONAS CON DISCAPACIDAD — {m.puesto} ({m.codigo_ast})", bold=True, size=13,
+    celda(ws, "A1:J1", f"PERSONAS CON DISCAPACIDAD — {m.puesto} ({m.codigo_ast})", bold=True, size=13,
           color="FFFFFFFF", bg=cfg.COLOR_AZUL)
     ws.row_dimensions[1].height = 28
-    celda(ws, "A2:I2", "Información sensible de uso interno de SSO. Detalle del resumen de las columnas 3 a 6 de la matriz.",
+    celda(ws, "A2:J2", "Información sensible de uso interno de SSO. Detalle del resumen de las columnas 3 a 6 de la matriz.",
           size=8, al=L, borde=False)
     cab = ["N°", "NOMBRE", "CARGO", "TIPO DE DISCAPACIDAD", "PORCENTAJE", "AYUDAS TÉCNICAS",
-           "OBSERVACIÓN", "CATEGORÍA DE VULNERABILIDAD", "ACTIVIDADES QUE REALIZA"]
-    for col, txt in zip("ABCDEFGHI", cab):
+           "OBSERVACIÓN", "CATEGORÍA DE VULNERABILIDAD", "ACTIVIDADES RUTINARIAS",
+           "ACTIVIDADES NO RUTINARIAS"]
+    for col, txt in zip("ABCDEFGHIJ", cab):
         celda(ws, f"{col}4", txt, bold=True, size=9, bg=cfg.COLOR_GRIS)
     ws.row_dimensions[4].height = 30
     if not m.personas_discapacidad:
-        celda(ws, "A5:I5", "No se registran personas con discapacidad en las entrevistas de este puesto.", size=9)
+        celda(ws, "A5:J5", "No se registran personas con discapacidad en las entrevistas de este puesto.", size=9)
         return
     for i, p in enumerate(m.personas_discapacidad, 1):
         r = 4 + i
-        acts = _vinetas(p.actividades_txt)
-        for col, val in zip("ABCDEFGHI", [i, p.nombre, p.cargo, p.tipo, p.porcentaje, p.ayuda,
-                                           p.observacion, p.categoria, acts]):
-            celda(ws, f"{col}{r}", val, size=9, al=L if col in "BCFGI" else C)
-        ws.row_dimensions[r].height = max(30, _lineas(acts, anchos["I"]) * 12 + 6)
+        acts = _vinetas(p.actividades_txt) or "N/A"
+        no_rut = _vinetas(list(dict.fromkeys(p.eventos))) or "N/A"
+        for col, val in zip("ABCDEFGHIJ", [i, p.nombre, p.cargo, p.tipo, p.porcentaje, p.ayuda,
+                                            p.observacion, p.categoria, acts, no_rut]):
+            celda(ws, f"{col}{r}", val, size=9, al=L if col in "BCFGIJ" else C)
+        ws.row_dimensions[r].height = max(30, max(_lineas(acts, anchos["I"]), _lineas(no_rut, anchos["J"])) * 12 + 6)
 
 
 def _logos(ws: Worksheet) -> None:
