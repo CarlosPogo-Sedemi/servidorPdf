@@ -230,18 +230,37 @@ def _personas(entrevistas: list, comunes_txt: list[str]) -> list[Persona]:
     return salida
 
 
+def _equipos_tecnologicos(valor: Any) -> list:
+    """EQUIPOS_TECNOLOGICOS viene como {Categorias: [{Categoria, Equipos: [{Equipo, ...}]}], TotalGeneral}
+    o como lista simple. Se aplana a textos 'Categoría - Equipo'."""
+    salida = []
+    for item in a_lista(valor):
+        if isinstance(item, dict) and "Categorias" in item:
+            for cat in a_lista(item.get("Categorias")):
+                if not isinstance(cat, dict):
+                    continue
+                nombre_cat = str(cat.get("Categoria") or "").strip()
+                for eq in a_lista(cat.get("Equipos")):
+                    txt = descripcion_item(eq)
+                    if txt:
+                        salida.append(f"{nombre_cat} - {txt}" if nombre_cat else txt)
+        else:
+            salida.append(item)
+    return salida
+
+
 def _maquinas(data: dict, entrevistas: list) -> dict[str, list[str]]:
     grupos = {
         "Herramientas / utensilios": a_lista(data.get("utensilios")),
         "Materiales / sustancias": a_lista(data.get("materiales")),
         "Equipos": a_lista(data.get("equipos")),
-        "Equipos tecnológicos": a_lista(data.get("equipos_tecnologicos")),
+        "Equipos tecnológicos": _equipos_tecnologicos(data.get("equipos_tecnologicos")),
     }
     for e in entrevistas:
         if isinstance(e, dict):
             grupos["Herramientas / utensilios"] += a_lista(e.get("UtensiliosJSON"))
             grupos["Materiales / sustancias"] += a_lista(e.get("MaterialesJSON"))
-            grupos["Equipos tecnológicos"] += a_lista(e.get("EquiposTecnologicosJSON"))
+            grupos["Equipos tecnológicos"] += _equipos_tecnologicos(e.get("EquiposTecnologicosJSON"))
     salida = {}
     for grupo, items in grupos.items():
         vistos, lista = set(), []
