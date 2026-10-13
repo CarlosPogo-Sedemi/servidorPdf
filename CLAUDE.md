@@ -70,6 +70,11 @@ Endpoints:
   + `functions/matriz_ast_excel.py`) — genera el Excel FOR SEI 02 (Matriz de riesgos por puesto,
   método INSST) con openpyxl desde la columna MATRIZ_RIESGOS de AST_PUESTO_TRABAJO. Reglas y colores
   en `functions/matriz_ast_config.py`; descripciones por factor en `assets/matriz_ast/catalogo_factores.json`.
+- `POST /api/v1/generar-excel-matriz-geritra/` (`routers/matriz_geritra.py` → `functions/geritra_service.py`
+  + `functions/geritra_excel.py`) — genera la Matriz GERITRA (columnas A..AO) desde MATRIZ_RIESGOS, ENTREVISTAS_AST,
+  ACTIVIDADES_COMUNES_AST y UTENSILIOS/MATERIALES/EQUIPOS de AST_PUESTO_TRABAJO. Jerarquía de controles por medida en
+  `assets/matriz_ast/jerarquia_medidas.json`; reglas y colores en `functions/geritra_config.py`. Incluye hoja
+  "PERSONAS CON DISCAPACIDAD".
 - `GET /api/v1/ping/` (`routers/utils.py`) — salud / keep-alive.
 
 ### Pipeline DOCX (la parte delicada)
