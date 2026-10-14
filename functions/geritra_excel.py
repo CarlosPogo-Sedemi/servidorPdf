@@ -124,6 +124,16 @@ def _discapacidad(f: Fila) -> tuple[str, str, str, str]:
 # ----------------------------------------------------------------------------
 # Secciones
 # ----------------------------------------------------------------------------
+def _mas_un_anio(f: date | None) -> date | None:
+    """Fecha de revaluación = fecha de evaluación + 1 año (29/02 -> 28/02)."""
+    if not f:
+        return None
+    try:
+        return f.replace(year=f.year + 1)
+    except ValueError:
+        return f.replace(year=f.year + 1, day=28)
+
+
 def _encabezado(ws: Worksheet, m: MatrizGeritra) -> None:
     ws.row_dimensions[1].height = 60
     celda(ws, f"A1:{ULTIMA}1", cfg.TITULO, bold=True, size=20, color=cfg.COLOR_AZUL)
@@ -133,6 +143,7 @@ def _encabezado(ws: Worksheet, m: MatrizGeritra) -> None:
         ("RAZÓN SOCIAL", m.razon_social), ("RUC", m.ruc), ("DIRECCIÓN", m.direccion),
         ("TELÉFONO", m.telefono), ("RESPONSABLE DE LA EVALUACIÓN", m.responsable_evaluacion),
         ("RESPONSABLE DE SSO", m.responsable_sso), ("FECHA DE LA EVALUACIÓN", m.fecha_evaluacion),
+        ("FECHA DE REVALUACIÓN", _mas_un_anio(m.fecha_evaluacion)),
     ]
     for i, (lbl, val) in enumerate(izq):
         r = 3 + i
