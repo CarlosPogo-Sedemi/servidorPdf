@@ -13,7 +13,7 @@ from openpyxl.utils import range_boundaries
 from openpyxl.worksheet.worksheet import Worksheet
 
 from functions import geritra_config as cfg
-from functions.geritra_service import Fila, MatrizGeritra, Persona, construir
+from functions.geritra_service import NO_APLICA, Fila, MatrizGeritra, Persona, construir, maquinas_de_actividad
 
 FUENTE = "Arial"
 _fino = Side(style="thin", color="FF000000")
@@ -228,6 +228,14 @@ def _asegurar_alto(ws: Worksheet, ini: int, fin: int, minimo: float) -> None:
             ws.row_dimensions[i].height = (ws.row_dimensions[i].height or 15) + extra
 
 
+def _texto_maquinas(por_actividad, general: dict) -> str:
+    """Columna 9 por actividad. Registros antiguos (sin MaquinasEquipos) -> listado general del puesto."""
+    grupos = general if por_actividad is None else por_actividad
+    if not grupos:
+        return NO_APLICA if por_actividad is not None else "N/A"
+    return "\n\n".join(f"{grupo}:\n" + _vinetas(items) for grupo, items in grupos.items())
+
+
 def _cuerpo(ws: Worksheet, m: MatrizGeritra) -> int:
     r = FILA_INI
     for _, grupo in groupby(m.filas, key=lambda f: f.orden[0]):
@@ -243,17 +251,18 @@ def _cuerpo(ws: Worksheet, m: MatrizGeritra) -> int:
         celda(ws, f"E{ini}:E{fin}", e, size=8, al=L)
         celda(ws, f"F{ini}:F{fin}", fa, size=8, al=L)
         celda(ws, f"G{ini}:G{fin}", g, size=8, al=L)
+        maq = _texto_maquinas(maquinas_de_actividad(filas), m.maquinas)
+        celda(ws, f"J{ini}:J{fin}", maq, size=8, al=LT if maq != NO_APLICA else L)
         _asegurar_alto(ws, ini, fin, max(_lineas(d, ANCHOS["D"], 8), _lineas(e, ANCHOS["E"], 8),
                                          _lineas(fa, ANCHOS["F"], 8), _lineas(g, ANCHOS["G"], 8),
+                                         _lineas(maq, ANCHOS["J"], 8),
                                          _lineas(filas[0].actividad, ANCHOS["H"])) * 11 + 10)
     fin = r - 1
-    maq = "\n\n".join(f"{grupo}:\n" + _vinetas(items) for grupo, items in m.maquinas.items()) or "N/A"
     celda(ws, f"A{FILA_INI}:A{fin}", 1, bold=True, size=12)   # consecutivo del proceso
     celda(ws, f"B{FILA_INI}:B{fin}", m.proceso, bold=True, size=10)
     celda(ws, f"C{FILA_INI}:C{fin}", m.puesto, bold=True, size=10)
     celda(ws, f"I{FILA_INI}:I{fin}", _vinetas(m.no_rutinarias) or "N/A", size=8, al=LT)
-    celda(ws, f"J{FILA_INI}:J{fin}", maq, size=8, al=LT)
-    _asegurar_alto(ws, FILA_INI, fin, max(_lineas(maq, ANCHOS["J"], 8), _lineas(_vinetas(m.no_rutinarias), ANCHOS["I"], 8)) * 11)
+    _asegurar_alto(ws, FILA_INI, fin, _lineas(_vinetas(m.no_rutinarias), ANCHOS["I"], 8) * 11)
     return r
 
 

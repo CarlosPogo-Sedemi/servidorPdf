@@ -179,6 +179,9 @@ class Fila:
     # discapacidad (opción A: solo quienes hacen esta actividad)
     disc_personas: list[Persona] = field(default_factory=list)
     total_personas_actividad: int = 0
+    # columna 9: lo seleccionado en el combo de máquinas/equipos de la app (por registro)
+    maquinas: list[tuple[str, str]] = field(default_factory=list)
+    maquinas_informado: bool = False
 
 
 @dataclass
@@ -272,6 +275,49 @@ def _maquinas(data: dict, entrevistas: list) -> dict[str, list[str]]:
     return salida
 
 
+GRUPO_POR_TIPO = {
+    "herramienta / utensilio": "Herramientas / utensilios",
+    "utensilio": "Herramientas / utensilios",
+    "material / sustancia": "Materiales / sustancias",
+    "material": "Materiales / sustancias",
+    "equipo": "Equipos",
+    "equipo tecnologico": "Equipos tecnológicos",
+}
+NO_APLICA = "No aplica"
+
+
+def _maquinas_registro(valor: Any) -> list[tuple[str, str]]:
+    """MaquinasEquipos del registro: [{Tipo, Descripcion}] o texto 'a | b | c'."""
+    if isinstance(valor, str) and valor.strip() and not valor.strip().startswith(("[", "{", '"')):
+        items: list = [x for x in valor.split("|")]
+    else:
+        items = a_lista(valor)
+    salida = []
+    for it in items:
+        txt = descripcion_item(it)
+        if not txt:
+            continue
+        tipo = str(it.get("Tipo") or "").strip() if isinstance(it, dict) else ""
+        salida.append((GRUPO_POR_TIPO.get(normalizar(tipo), tipo or "Otros"), txt))
+    return salida
+
+
+def maquinas_de_actividad(filas: list[Fila]) -> Optional[dict[str, list[str]]]:
+    """Unión de lo seleccionado en todos los registros de la actividad.
+    None -> ningún registro lo trae (registros antiguos): usar el listado general."""
+    if not any(f.maquinas_informado for f in filas):
+        return None
+    grupos: dict[str, list[str]] = {}
+    vistos = set()
+    for f in filas:
+        for grupo, txt in f.maquinas:
+            if normalizar(txt) == normalizar(NO_APLICA) or normalizar(txt) in vistos:
+                continue
+            vistos.add(normalizar(txt))
+            grupos.setdefault(grupo, []).append(txt)
+    return grupos  # {} = "No aplica"
+
+
 def _evaluacion(d: dict) -> Evaluacion:
     c = a_entero(d.get("IndiceConsecuencias")) or cfg.CONSECUENCIA_IDX.get(str(d.get("Consecuencias") or ""))
     return Evaluacion(
@@ -338,6 +384,8 @@ def construir(data: dict) -> MatrizGeritra:
             orden=(orden_act[act_n], a_entero(r.get("NumeroRegistroMatriz")) or 0),
             disc_personas=[p for p in quienes if p.con_discapacidad],
             total_personas_actividad=len(quienes),
+            maquinas=_maquinas_registro(r.get("MaquinasEquipos")),
+            maquinas_informado="MaquinasEquipos" in r and bool(_maquinas_registro(r.get("MaquinasEquipos"))),
         ))
     filas.sort(key=lambda f: f.orden)
 
