@@ -202,6 +202,7 @@ class MatrizGeritra:
     maquinas: dict[str, list[str]]
     filas: list[Fila]
     personas_discapacidad: list[Persona]
+    maquinas_por_actividad: dict[str, list[tuple[str, str]]] = field(default_factory=dict)
 
 
 # ----------------------------------------------------------------------------
@@ -302,19 +303,34 @@ def _maquinas_registro(valor: Any) -> list[tuple[str, str]]:
     return salida
 
 
-def maquinas_de_actividad(filas: list[Fila]) -> Optional[dict[str, list[str]]]:
-    """Unión de lo seleccionado en todos los registros de la actividad.
-    None -> ningún registro lo trae (registros antiguos): usar el listado general."""
-    if not any(f.maquinas_informado for f in filas):
+def _maquinas_por_actividad(valor: Any) -> dict[str, list[tuple[str, str]]]:
+    """Columna MAQUINAS_ACTIVIDAD: [{Actividad, Maquinas: [{Tipo, Descripcion}]}]."""
+    salida = {}
+    for it in a_lista(valor):
+        if isinstance(it, dict) and texto_actividad(it.get("Actividad")):
+            salida[normalizar(texto_actividad(it.get("Actividad")))] = _maquinas_registro(it.get("Maquinas"))
+    return salida
+
+
+def maquinas_de_actividad(filas: list[Fila], por_actividad: Optional[dict] = None) -> Optional[dict[str, list[str]]]:
+    """Columna 9 de una actividad. Prioridad:
+    1) MAQUINAS_ACTIVIDAD (guardado único por actividad)
+    2) MaquinasEquipos dentro de los registros (unión)
+    None -> no hay dato: usar el listado general del puesto."""
+    clave = normalizar(filas[0].actividad) if filas else ""
+    if por_actividad and clave in por_actividad:
+        pares = por_actividad[clave]
+    elif any(f.maquinas_informado for f in filas):
+        pares = [p for f in filas for p in f.maquinas]
+    else:
         return None
     grupos: dict[str, list[str]] = {}
     vistos = set()
-    for f in filas:
-        for grupo, txt in f.maquinas:
-            if normalizar(txt) == normalizar(NO_APLICA) or normalizar(txt) in vistos:
-                continue
-            vistos.add(normalizar(txt))
-            grupos.setdefault(grupo, []).append(txt)
+    for grupo, txt in pares:
+        if normalizar(txt) == normalizar(NO_APLICA) or normalizar(txt) in vistos:
+            continue
+        vistos.add(normalizar(txt))
+        grupos.setdefault(grupo, []).append(txt)
     return grupos  # {} = "No aplica"
 
 
@@ -412,4 +428,5 @@ def construir(data: dict) -> MatrizGeritra:
         maquinas=_maquinas(data, entrevistas),
         filas=filas,
         personas_discapacidad=[p for p in personas if p.con_discapacidad],
+        maquinas_por_actividad=_maquinas_por_actividad(data.get("maquinas_actividad")),
     )

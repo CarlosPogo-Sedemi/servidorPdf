@@ -251,7 +251,7 @@ def _cuerpo(ws: Worksheet, m: MatrizGeritra) -> int:
         celda(ws, f"E{ini}:E{fin}", e, size=8, al=L)
         celda(ws, f"F{ini}:F{fin}", fa, size=8, al=L)
         celda(ws, f"G{ini}:G{fin}", g, size=8, al=L)
-        maq = _texto_maquinas(maquinas_de_actividad(filas), m.maquinas)
+        maq = _texto_maquinas(maquinas_de_actividad(filas, m.maquinas_por_actividad), m.maquinas)
         celda(ws, f"J{ini}:J{fin}", maq, size=8, al=LT if maq != NO_APLICA else L)
         _asegurar_alto(ws, ini, fin, max(_lineas(d, ANCHOS["D"], 8), _lineas(e, ANCHOS["E"], 8),
                                          _lineas(fa, ANCHOS["F"], 8), _lineas(g, ANCHOS["G"], 8),

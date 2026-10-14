@@ -12,7 +12,8 @@ class PayloadMatrizGeritra(BaseModel):
     - matriz_riesgos        -> columna MATRIZ_RIESGOS (nombre interno MATRIZ_RIESGO)
     - entrevistas_ast       -> ENTREVISTAS_AST (discapacidad, actividades y eventos por persona)
     - actividades_comunes_ast -> ACTIVIDADES_COMUNES_AST (aplican a todas las personas)
-    - utensilios, materiales, equipos, equipos_tecnologicos -> columna 9 de la GERITRA
+    - maquinas_actividad    -> MAQUINAS_ACTIVIDAD (columna 9 por actividad, una vez por actividad)
+    - utensilios, materiales, equipos, equipos_tecnologicos -> respaldo de la columna 9
     """
     model_config = ConfigDict(extra="ignore")
 
@@ -31,3 +32,5 @@ class PayloadMatrizGeritra(BaseModel):
     materiales: JsonLista = None
     equipos: JsonLista = None
     equipos_tecnologicos: JsonLista = None
+    # MAQUINAS_ACTIVIDAD: [{Actividad, Maquinas: [{Tipo, Descripcion}]}] -> columna 9 por actividad
+    maquinas_actividad: JsonLista = None
