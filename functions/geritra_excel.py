@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import math
-from datetime import date
+from datetime import date, datetime
 from io import BytesIO
 from itertools import groupby
 
@@ -371,21 +371,23 @@ def _bloques_firma() -> list[tuple[str, str, str]]:
 
 def _firmas(ws: Worksheet, r: int, m: MatrizGeritra) -> int:
     """Pie del documento: Realizado / Revisado / Aprobado por (nombre, firma, fecha).
-    Solo se llena el nombre de quien realizó; lo demás queda para llenar a mano."""
+    Se llenan el nombre y la fecha (de generación) de quien realizó; lo demás queda para llenar a mano."""
     r += 2
     realizado = m.responsable_evaluacion or m.responsable_sso
-    titulos = [("REALIZADO POR", realizado), ("REVISADO POR", ""), ("APROBADO POR", "")]
+    hoy = datetime.now(cfg.TZ).date()  # fecha en que se genera el archivo
+    titulos = [("REALIZADO POR", realizado, hoy), ("REVISADO POR", "", None), ("APROBADO POR", "", None)]
     alturas = {"titulo": 22, "Nombre:": 30, "Firma:": 60, "Fecha:": 24}
     ws.row_dimensions[r].height = alturas["titulo"]
-    for (ini, etq, fin), (titulo, nombre) in zip(_bloques_firma(), titulos):
+    for (ini, etq, fin), (titulo, nombre, fecha) in zip(_bloques_firma(), titulos):
         siguiente = get_column_letter(column_index_from_string(etq) + 1)
         celda(ws, f"{ini}{r}:{fin}{r}", titulo, bold=True, size=11, color="FFFFFFFF", bg=cfg.COLOR_AZUL)
-        for i, (etiqueta, valor) in enumerate((("Nombre:", nombre), ("Firma:", ""), ("Fecha:", ""))):
+        for i, (etiqueta, valor) in enumerate((("Nombre:", nombre), ("Firma:", ""), ("Fecha:", fecha))):
             fila = r + 1 + i
             ws.row_dimensions[fila].height = alturas[etiqueta]
             celda(ws, f"{ini}{fila}:{etq}{fila}", etiqueta, bold=True, size=10, bg=cfg.COLOR_GRIS,
                   al=Alignment(horizontal="left", vertical="center", indent=1))
-            celda(ws, f"{siguiente}{fila}:{fin}{fila}", valor, size=10, bold=bool(valor), al=C)
+            celda(ws, f"{siguiente}{fila}:{fin}{fila}", valor, size=10, bold=bool(valor), al=C,
+                  formato="DD/MM/YYYY" if isinstance(valor, date) else None)
     return r + 3
 
 
