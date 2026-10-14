@@ -9,7 +9,7 @@ from itertools import groupby
 from openpyxl import Workbook
 from openpyxl.drawing.image import Image as XLImage
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
-from openpyxl.utils import range_boundaries
+from openpyxl.utils import column_index_from_string, get_column_letter, range_boundaries
 from openpyxl.worksheet.worksheet import Worksheet
 
 from functions import geritra_config as cfg
@@ -335,6 +335,49 @@ def _logos(ws: Worksheet) -> None:
             ws.add_image(img, ancla)
 
 
+def _bloques_firma() -> list[tuple[str, str, str]]:
+    """Divide A..AO en 3 bloques de ancho similar: (col_ini, col_etiqueta_fin, col_fin)."""
+    cols = list(ANCHOS)
+    total = sum(ANCHOS.values())
+    bloques, ini, acum = [], 0, 0.0
+    for i, col in enumerate(cols):
+        acum += ANCHOS[col]
+        if len(bloques) < 2 and acum >= total * (len(bloques) + 1) / 3:
+            bloques.append((ini, i))
+            ini = i + 1
+    bloques.append((ini, len(cols) - 1))
+    salida = []
+    for a, b in bloques:
+        # la etiqueta ("Nombre:", "Firma:", "Fecha:") ocupa ~22% del bloque
+        ancho_bloque = sum(ANCHOS[c] for c in cols[a:b + 1])
+        k, acc = a, ANCHOS[cols[a]]
+        while k < b - 1 and acc < ancho_bloque * 0.22:
+            k += 1
+            acc += ANCHOS[cols[k]]
+        salida.append((cols[a], cols[k], cols[b]))
+    return salida
+
+
+def _firmas(ws: Worksheet, r: int, m: MatrizGeritra) -> int:
+    """Pie del documento: Realizado / Revisado / Aprobado por (nombre, firma, fecha).
+    Solo se llena el nombre de quien realizó; lo demás queda para llenar a mano."""
+    r += 2
+    realizado = m.responsable_evaluacion or m.responsable_sso
+    titulos = [("REALIZADO POR", realizado), ("REVISADO POR", ""), ("APROBADO POR", "")]
+    alturas = {"titulo": 22, "Nombre:": 30, "Firma:": 60, "Fecha:": 24}
+    ws.row_dimensions[r].height = alturas["titulo"]
+    for (ini, etq, fin), (titulo, nombre) in zip(_bloques_firma(), titulos):
+        siguiente = get_column_letter(column_index_from_string(etq) + 1)
+        celda(ws, f"{ini}{r}:{fin}{r}", titulo, bold=True, size=11, color="FFFFFFFF", bg=cfg.COLOR_AZUL)
+        for i, (etiqueta, valor) in enumerate((("Nombre:", nombre), ("Firma:", ""), ("Fecha:", ""))):
+            fila = r + 1 + i
+            ws.row_dimensions[fila].height = alturas[etiqueta]
+            celda(ws, f"{ini}{fila}:{etq}{fila}", etiqueta, bold=True, size=10, bg=cfg.COLOR_GRIS,
+                  al=Alignment(horizontal="left", vertical="center", indent=1))
+            celda(ws, f"{siguiente}{fila}:{fin}{fila}", valor, size=10, bold=bool(valor), al=C)
+    return r + 3
+
+
 def _impresion(ws: Worksheet, ultima: int) -> None:
     ws.print_title_rows = f"{H1}:{H2}"
     ws.print_area = f"A1:{ULTIMA}{ultima}"
@@ -365,6 +408,7 @@ def generar_excel_geritra(data: dict) -> tuple[bytes, str]:
     else:
         celda(ws, f"A{FILA_INI}:{ULTIMA}{FILA_INI}", "El AST no tiene registros en la matriz de riesgos.", bold=True)
         ultima = FILA_INI
+    ultima = _firmas(ws, ultima, m)
     _logos(ws)
     _impresion(ws, ultima)
     _hoja_discapacidad(wb, m)
