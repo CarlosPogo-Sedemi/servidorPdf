@@ -160,27 +160,6 @@ def _encabezado(ws: Worksheet, m: MatrizGeritra) -> None:
         r = 3 + i
         celda(ws, f"L{r}:P{r}", lbl, bold=True, bg=cfg.COLOR_GRIS, al=L)
         celda(ws, f"Q{r}:U{r}", val, al=L)
-    # Leyenda según la Guía GERITRA: matriz del Paso 18 + tabla de niveles del Paso 19
-    blanco = "FFFFFFFF"
-    celda(ws, "W3:AH3", "NIVELES DE RIESGO", bold=True, size=12, color=blanco, bg=cfg.COLOR_AZUL)
-    celda(ws, "W4:X4", None, bg=cfg.COLOR_GRIS)
-    celda(ws, "Y4:AA4", "CONSECUENCIAS-SEVERIDAD", bold=True, size=10, bg=cfg.COLOR_GRIS)
-    celda(ws, "W5:X7", "PROBABILIDAD", bold=True, size=10, bg=cfg.COLOR_GRIS)
-    for i, fila in enumerate(cfg.MATRIZ_NIVELES):
-        r = 5 + i
-        for col, (nivel, rango) in zip(("Y", "Z", "AA"), fila):
-            celda(ws, f"{col}{r}", f"{nivel.upper()}\n{rango}", bold=True, size=9, bg=cfg.COLOR_NIVEL[nivel])
-    celda(ws, "W8:AA9", cfg.NOTA_VALORACION, size=8, al=L)
-    celda(ws, "AB4", "VALORES", bold=True, size=10, bg=cfg.COLOR_GRIS)
-    celda(ws, "AC4", "NIVEL DE RIESGO", bold=True, size=10, bg=cfg.COLOR_GRIS)
-    celda(ws, "AD4:AH4", "ACCIÓN Y TEMPORIZACIÓN", bold=True, size=10, bg=cfg.COLOR_GRIS)
-    for i, nivel in enumerate(cfg.COLOR_NIVEL):
-        r = 5 + i
-        celda(ws, f"AB{r}", cfg.VALORES_NIVEL[nivel], bold=True, size=9, bg=cfg.COLOR_NIVEL[nivel])
-        celda(ws, f"AC{r}", nivel.upper(), bold=True, size=9, bg=cfg.COLOR_NIVEL[nivel])
-        celda(ws, f"AD{r}:AH{r}", cfg.ACCION_NIVEL[nivel], size=8, al=L)
-    for r in range(4, 10):
-        ws.row_dimensions[r].height = 34
 
     ws.row_dimensions[13].height = 28
     for rng, txt, sec in SECCIONES:
@@ -336,6 +315,167 @@ def _hoja_discapacidad(wb: Workbook, m: MatrizGeritra) -> None:
         ws.row_dimensions[r].height = max(30, max(_lineas(acts, anchos["I"]), _lineas(no_rut, anchos["J"])) * 12 + 6)
 
 
+# ----------------------------------------------------------------------------
+# Hoja de referencias: tablas de la Guía GERITRA (Pasos 11 a 20)
+# ----------------------------------------------------------------------------
+ANCHOS_REF = {"A": 20, "B": 30, "C": 30, "D": 30, "E": 56}
+ANCHO_REF_TOTAL = sum(ANCHOS_REF.values())
+ANCHO_REF_DESC = ANCHOS_REF["C"] + ANCHOS_REF["D"] + ANCHOS_REF["E"]
+
+
+def _ref_titulo(ws: Worksheet, r: int, texto: str, intro: str | None = None) -> int:
+    ws.row_dimensions[r].height = 24
+    celda(ws, f"A{r}:E{r}", texto, bold=True, size=11, color="FFFFFFFF", bg=cfg.COLOR_AZUL, al=L)
+    r += 1
+    if intro:
+        ws.row_dimensions[r].height = max(18, _lineas(intro, ANCHO_REF_TOTAL, 9) * 12 + 6)
+        celda(ws, f"A{r}:E{r}", intro, size=9, al=L, borde=False)
+        r += 1
+    return r
+
+
+def _ref_tabla(ws: Worksheet, r: int, cabeceras: tuple[str, str, str],
+               filas: list[tuple], colores: list[str]) -> int:
+    # cabeceras = (col. A, col. B, cols. C:E); filas = [(A, B, C:E)]; colores = relleno de A:B por fila
+    ws.row_dimensions[r].height = 22
+    celda(ws, f"A{r}", cabeceras[0], bold=True, size=9, bg=cfg.COLOR_GRIS)
+    celda(ws, f"B{r}", cabeceras[1], bold=True, size=9, bg=cfg.COLOR_GRIS)
+    celda(ws, f"C{r}:E{r}", cabeceras[2], bold=True, size=9, bg=cfg.COLOR_GRIS)
+    r += 1
+    for (a, b, desc), color in zip(filas, colores):
+        ws.row_dimensions[r].height = max(26, max(_lineas(desc, ANCHO_REF_DESC, 9),
+                                              _lineas(str(b), ANCHOS_REF["B"], 9)) * 12 + 8)
+        celda(ws, f"A{r}", a, bold=True, size=10, bg=color)
+        celda(ws, f"B{r}", b, bold=True, size=9, bg=color)
+        celda(ws, f"C{r}:E{r}", desc, size=9, al=L)
+        r += 1
+    return r + 1
+
+
+def _ref_indice(ws: Worksheet, r: int, paso: int) -> int:
+    titulo, intro, cabecera, filas = cfg.TABLAS_INDICE[paso]
+    r = _ref_titulo(ws, r, titulo, intro)
+    return _ref_tabla(ws, r, ("ÍNDICE", "CALIFICACIÓN", cabecera), filas, [cfg.COLOR_INDICE[f[0]] for f in filas])
+
+
+def _ref_banner(ws: Worksheet, r: int, texto: str, seccion: str) -> int:
+    ws.row_dimensions[r].height = 30
+    celda(ws, f"A{r}:E{r}", texto, bold=True, size=12, bg=cfg.COLOR_SECCION[seccion])
+    return r + 2
+
+
+def _ref_pasos(ws: Worksheet, r: int, seccion: str) -> int:
+    filas = [(f"PASO {paso}", nombre, desc) for paso, nombre, desc in cfg.PASOS_DESCRIPCION[seccion]]
+    return _ref_tabla(ws, r, ("PASO", "NOMBRE DE LA COLUMNA", "QUÉ SE REGISTRA"), filas,
+                      [cfg.COLOR_SECCION[seccion]] * len(filas))
+
+
+def _hoja_referencias(wb: Workbook) -> None:
+    ws = wb.create_sheet(cfg.NOMBRE_HOJA_REFERENCIAS)
+    ws.sheet_view.showGridLines = False
+    for col, ancho in ANCHOS_REF.items():
+        ws.column_dimensions[col].width = ancho
+
+    ws.row_dimensions[1].height = 32
+    celda(ws, "A1:E1", "REFERENCIAS DE LA MATRIZ GERITRA", bold=True, size=14, color=cfg.COLOR_AZUL)
+    ws.row_dimensions[2].height = 30
+    celda(ws, "A2:E2", cfg.NOTA_REFERENCIAS, size=9, al=L, borde=False)
+    r = 4
+
+    # ---- Identificación del puesto de trabajo (Pasos 1 a 9)
+    r = _ref_banner(ws, r, "IDENTIFICACIÓN DEL PUESTO DE TRABAJO · PASOS 1 A 9", "ID")
+    r = _ref_titulo(ws, r, "PASOS 1 A 9 · QUÉ SE REGISTRA EN CADA COLUMNA")
+    r = _ref_pasos(ws, r, "ID")
+    r = _ref_titulo(ws, r, "PASO 3 · TIPOS DE DISCAPACIDAD", "Lista de selección de la columna 3 (definiciones de la guía).")
+    r = _ref_tabla(ws, r, ("N°", "TIPO DE DISCAPACIDAD", "DESCRIPCIÓN"),
+                   [(i, nombre, desc) for i, (nombre, desc) in enumerate(cfg.TIPOS_DISCAPACIDAD, 1)],
+                   [cfg.COLOR_GRIS] * len(cfg.TIPOS_DISCAPACIDAD))
+    r = _ref_titulo(ws, r, "PASO 5 · AYUDAS TÉCNICAS EN EL TRABAJO", "Lista de selección de la columna 5.")
+    ws.row_dimensions[r].height = 24
+    celda(ws, f"A{r}:E{r}", "  ·  ".join(cfg.AYUDAS_TECNICAS), size=9, al=L)
+    r += 2
+
+    # ---- Identificación de peligros y diagnóstico integral de riesgos (Pasos 10 a 20)
+    r = _ref_banner(ws, r, "IDENTIFICACIÓN DE PELIGROS Y DIAGNÓSTICO INTEGRAL DE RIESGOS · PASOS 10 A 20", "PELIGROS")
+    r = _ref_titulo(ws, r, "PASO 10 · PELIGRO (columna 10)")
+    r = _ref_pasos(ws, r, "PELIGROS")
+
+    # Pasos 11 y 12: cantidad de personas expuestas -> índice
+    r = _ref_titulo(ws, r, "PASO 11 · CANTIDAD DE PERSONAS EXPUESTAS (columna 11)")
+    ws.row_dimensions[r].height = max(26, _lineas(cfg.PASO_11_TEXTO, ANCHO_REF_TOTAL, 9) * 12 + 8)
+    celda(ws, f"A{r}:E{r}", cfg.PASO_11_TEXTO, size=9, al=L)
+    r += 2
+    for paso in (12, 13, 14, 15):
+        r = _ref_indice(ws, r, paso)
+
+    # Paso 16: probabilidad = suma de los 4 índices
+    r = _ref_titulo(ws, r, "PASO 16 · PROBABILIDAD (columna 16)",
+                    "P = Σ de los índices de los pasos 12 al 15. Resultado de 4 a 12.")
+    ws.row_dimensions[r].height = 54
+    partes = ["ÍNDICE DE PERSONAS EXPUESTAS\n(columna 12)",
+              "+ ÍNDICE DE PROCEDIMIENTOS EXISTENTES\n(columna 13)",
+              "+ ÍNDICE DE CAPACITACIONES Y CAPACIDADES HUMANAS\n(columna 14)",
+              "+ ÍNDICE DE EXPOSICIÓN AL RIESGO\n(columna 15)",
+              "RESULTADO: NIVEL DE PROBABILIDAD\n(columna 16: de 4 a 12)"]
+    for col, txt in zip("ABCDE", partes):
+        celda(ws, f"{col}{r}", txt, bold=True, size=9, bg=cfg.COLOR_GRIS)
+    r += 2
+
+    r = _ref_indice(ws, r, 17)
+
+    # Paso 18: matriz probabilidad x consecuencias
+    r = _ref_titulo(ws, r, "PASO 18 · VALORACIÓN DEL RIESGO (columna 18)", cfg.NOTA_VALORACION)
+    ws.row_dimensions[r].height = 22
+    celda(ws, f"A{r}", None, bg=cfg.COLOR_GRIS)
+    celda(ws, f"B{r}:D{r}", "CONSECUENCIAS-SEVERIDAD", bold=True, size=9, bg=cfg.COLOR_GRIS)
+    celda(ws, f"A{r + 1}:A{r + 3}", "PROBABILIDAD", bold=True, size=9, bg=cfg.COLOR_GRIS,
+          al=Alignment(horizontal="center", vertical="center", text_rotation=90))
+    for i, fila in enumerate(cfg.MATRIZ_NIVELES):
+        ws.row_dimensions[r + 1 + i].height = 36
+        for col, (nivel, rango) in zip("BCD", fila):
+            celda(ws, f"{col}{r + 1 + i}", f"{nivel.upper()}\n{rango}", bold=True, size=9, bg=cfg.COLOR_NIVEL[nivel])
+    r += 5
+
+    # Paso 19: niveles de riesgo (tabla que estaba en la hoja principal)
+    r = _ref_titulo(ws, r, "PASO 19 · NIVEL DE RIESGO (columna 19)",
+                    "Nivel según el valor obtenido en el Paso 18.")
+    niveles = list(cfg.COLOR_NIVEL)
+    r = _ref_tabla(ws, r, ("VALORES", "NIVEL DE RIESGO", "ACCIÓN Y TEMPORIZACIÓN"),
+                   [(cfg.VALORES_NIVEL[n], n.upper(), cfg.ACCION_NIVEL[n]) for n in niveles],
+                   [cfg.COLOR_NIVEL[n] for n in niveles])
+
+    # Paso 20: clasificación de los riesgos
+    r = _ref_titulo(ws, r, "PASO 20 · CLASIFICACIÓN DE LOS RIESGOS (columna 20)",
+                    "Clasificación del factor de riesgo de la actividad analizada.")
+    for i, txt in enumerate(cfg.CLASIFICACIONES_RIESGO, 1):
+        ws.row_dimensions[r].height = 20
+        celda(ws, f"A{r}", i, bold=True, size=9, bg=cfg.COLOR_GRIS)
+        celda(ws, f"B{r}:E{r}", txt, size=9, al=L)
+        r += 1
+    r += 1
+
+    # ---- Jerarquía de los controles (Pasos 21 a 25)
+    r = _ref_banner(ws, r, "JERARQUÍA DE LOS CONTROLES EN LA SEGURIDAD Y SALUD EN EL TRABAJO · PASOS 21 A 25", "JERARQUIA")
+    r = _ref_titulo(ws, r, "PASOS 21 A 25 · QUÉ SE REGISTRA EN CADA COLUMNA", cfg.NOTA_JERARQUIA)
+    r = _ref_pasos(ws, r, "JERARQUIA")
+
+    # ---- Gestión del riesgo residual (Pasos 26 a 37)
+    r = _ref_banner(ws, r, "GESTIÓN DEL RIESGO RESIDUAL · PASOS 26 A 37", "RESIDUAL")
+    r = _ref_titulo(ws, r, "PASOS 26 A 33 · REEVALUACIÓN DEL RIESGO (columnas 26 a 33)")
+    ws.row_dimensions[r].height = max(26, _lineas(cfg.NOTA_RESIDUAL, ANCHO_REF_TOTAL, 9) * 12 + 8)
+    celda(ws, f"A{r}:E{r}", cfg.NOTA_RESIDUAL, size=9, al=L)
+    r += 2
+    r = _ref_titulo(ws, r, "PASOS 34 A 37 · QUÉ SE REGISTRA EN CADA COLUMNA")
+    r = _ref_pasos(ws, r, "RESIDUAL")
+
+    ws.print_area = f"A1:E{r}"
+    ws.page_setup.orientation = "portrait"
+    ws.page_setup.paperSize = ws.PAPERSIZE_A4
+    ws.page_setup.fitToWidth = 1
+    ws.page_setup.fitToHeight = 0
+    ws.sheet_properties.pageSetUpPr.fitToPage = True
+
+
 def _logos(ws: Worksheet) -> None:
     for archivo, ancla, alto in (("logo_sedemi.png", "A1", 40), ("logo_mrl.png", "AL1", 60)):
         ruta = cfg.ASSETS_DIR / archivo
@@ -424,6 +564,7 @@ def generar_excel_geritra(data: dict) -> tuple[bytes, str]:
     ultima = _firmas(ws, ultima, m)
     _logos(ws)
     _impresion(ws, ultima)
+    _hoja_referencias(wb)
     _hoja_discapacidad(wb, m)
     wb.calculation.fullCalcOnLoad = True
 
