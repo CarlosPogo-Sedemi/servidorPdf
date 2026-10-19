@@ -133,3 +133,23 @@ tarjeta en blanco (no cero páginas), a propósito. Las fechas llegan en ISO y s
   plantilla deben usar la sintaxis `{%tr %}`.
 - Los errores se capturan de forma amplia y se devuelven como `HTTPException` 500 (404 si falta
   la plantilla), con el detalle impreso en stdout.
+
+### Pipeline PDF editable (AcroForm)
+
+`POST /api/v1/llenar-pdf/` (`routers/pdf_formularios.py` → `functions/pdf_form_service.py`) rellena
+`templates_pdf/<template_name>.pdf` (un PDF que ya tiene campos de formulario) con `data` =
+`{nombre_del_campo: valor}` y devuelve el mismo PDF **sin aplanar**: los campos siguen editables.
+No pasa por DOCX ni WeasyPrint (convertir a PDF destruye los campos). Usa `pypdf` + Pillow.
+
+- Descubrir nombres de campos: `GET /api/v1/pdf-campos/<plantilla>`, `POST /api/v1/pdf-campos/`
+  (subiendo un PDF) o `python -m scripts.inspeccionar_pdf templates_pdf/X.pdf` (genera `X.campos.json`).
+- Tipos: texto/combo → string; casilla → bool; radio → nombre de la opción; imagen (firma/foto) →
+  base64/`data:image` (se estampa en el recuadro del campo y el recuadro se quita).
+- La clave puede ser el nombre completo (`Grupo.campo`) o el corto si no es ambiguo. Las claves que
+  no coinciden se reportan en los headers `X-Campos-*` (y `estricto: true` responde 422).
+- Se elimina `/XFA` del AcroForm (si no, Adobe ignora los valores) y NO se activa `NeedAppearances` (degradaba los radios); pypdf genera la apariencia del texto.
+- `templates_pdf/<nombre>.alias.json` (opcional) traduce nombres amigables del JSON a los campos reales
+  (uno a varios campos; `dividir` reparte texto largo en varias líneas; `valores` traduce p. ej. SI/NO a radios).
+- Las claves del JSON que empiezan con `_` (p. ej. `_codigo`) se ignoran: son datos para el flujo de Power Automate.
+- Los textos que no caben en un campo de una línea reducen la letra (mín. 6 pt).
+- Agregar una plantilla: copiar el PDF a `templates_pdf/`; no hace falta cambiar código.

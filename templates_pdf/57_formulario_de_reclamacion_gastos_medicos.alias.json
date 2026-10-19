@@ -1,0 +1,155 @@
+{
+  "contratante": "Texto175",
+  "poliza": "Texto176",
+  "apellidos": "Texto177",
+  "nombres": "Texto178",
+  "edad": "Texto179",
+  "provincia": "Texto180.0",
+  "canton": "Texto180.1",
+  "ciudad": "Texto180.2",
+  "barrio": "Texto180.3",
+  "calle_principal": "Texto181",
+  "numero": "Texto182",
+  "calle_transversal": "Texto183",
+  "edificio": "Texto184",
+  "depto": "Texto185",
+  "telefono": "Texto186",
+  "celular": "Texto187",
+  "fax": "Texto188",
+  "ocupacion": "Texto189",
+  "labores": {
+    "campo": [
+      "Texto190",
+      "Texto191"
+    ],
+    "dividir": true
+  },
+  "fecha_accidente": "Texto192",
+  "lugar_causas": {
+    "campo": [
+      "Texto193.0",
+      "Texto193.1",
+      "Texto193.2"
+    ],
+    "dividir": true
+  },
+  "lesiones": {
+    "campo": [
+      "Texto193.3",
+      "Texto193.4",
+      "Texto193.5"
+    ],
+    "dividir": true
+  },
+  "testigo1_nombre": "Texto194.0.0.0",
+  "testigo1_direccion": "Texto194.0.1.0",
+  "testigo1_telefono": "Texto195.0.0",
+  "testigo2_nombre": "Texto194.1.0.0",
+  "testigo2_direccion": "Texto194.1.1.0",
+  "testigo2_telefono": "Texto195.1.0",
+  "testigo3_nombre": "Texto194.2.0.0",
+  "testigo3_direccion": "Texto194.2.1.0",
+  "testigo3_telefono": "Texto195.2.0",
+  "medico1_nombre": "Texto194.0.0.1",
+  "medico1_direccion": "Texto194.0.1.1",
+  "medico1_telefono": "Texto195.0.1",
+  "medico2_nombre": "Texto194.1.0.1",
+  "medico2_direccion": "Texto194.1.1.1",
+  "medico2_telefono": "Texto195.1.1",
+  "medico3_nombre": "Texto194.2.0.1",
+  "medico3_direccion": "Texto194.2.1.1",
+  "medico3_telefono": "Texto195.2.1",
+  "visita_medico_compania": "Texto196",
+  "clinica": "Texto197",
+  "internado_desde": "Fecha198_af_date",
+  "internado_hasta": "Fecha199_af_date",
+  "incapacidad_desde": "Fecha201_af_date",
+  "incapacidad_hasta": "Fecha202_af_date",
+  "otros_seguros": {
+    "campo": [
+      "Texto203.0",
+      "Texto203.1"
+    ],
+    "dividir": true
+  },
+  "lugar_fecha": "Texto204",
+  "firma_asegurado": "Signature205",
+  "nombre_completo": "Texto206",
+  "diagnostico": "Texto209",
+  "cie10": "Texto210",
+  "naturaleza_lesiones": "Texto211",
+  "proviene_empleo": {
+    "campo": "Group237",
+    "valores": {
+      "SI": "0",
+      "TRUE": "0",
+      "NO": "1",
+      "FALSE": "1"
+    }
+  },
+  "proviene_empleo_explique": "Texto212",
+  "tipo_evento": {
+    "campo": "Group1",
+    "valores": {
+      "ACCIDENTE": "0",
+      "ENFERMEDAD": "1"
+    }
+  },
+  "accidente_explique": "Texto213.0",
+  "enfermedad_explique": "Texto213.1",
+  "primera_atencion_fecha": "Fecha214_af_date",
+  "antecedente1": "Texto215",
+  "antecedente1_fecha": "Fecha217_af_date",
+  "antecedente2": "Texto216",
+  "antecedente2_fecha": "Fecha218_af_date",
+  "intervencion_quirurgica": {
+    "campo": [
+      "Texto219",
+      "Texto220"
+    ],
+    "dividir": true
+  },
+  "otros_tratamientos_quirurgicos": {
+    "campo": [
+      "Texto221",
+      "Texto222"
+    ],
+    "dividir": true
+  },
+  "bajo_control": {
+    "campo": "Group2",
+    "valores": {
+      "SI": "0",
+      "TRUE": "0",
+      "NO": "1",
+      "FALSE": "1"
+    }
+  },
+  "bajo_control_termino": "Texto223",
+  "reclusion_hasta": "Texto224",
+  "otros_1": "Texto225",
+  "otros_2": "Texto226",
+  "medico_lugar_fecha": "Texto227",
+  "medico_ci": "Texto229",
+  "medico_direccion": "Texto230",
+  "medico_telefono": "Texto231",
+  "medico_celular": "Texto232",
+  "medico_registro": "Texto233",
+  "medico_email": "Texto234",
+  "medico_ciudad": "Texto235",
+  "firma_medico": "Signature236",
+  "cedula": "Texto240",
+  "otros_telefonos": "Texto243",
+  "tipo_cuenta": {
+    "campo": "Group3",
+    "valores": {
+      "CORRIENTE": "0",
+      "AHORROS": "1"
+    }
+  },
+  "numero_cuenta": "Texto245",
+  "banco": "Texto246",
+  "ci_ruc_titular": "Texto247",
+  "email_titular": "Texto248",
+  "firma_titular": "Signature249"
+}
