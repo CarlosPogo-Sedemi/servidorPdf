@@ -151,5 +151,6 @@ No pasa por DOCX ni WeasyPrint (convertir a PDF destruye los campos). Usa `pypdf
 - `templates_pdf/<nombre>.alias.json` (opcional) traduce nombres amigables del JSON a los campos reales
   (uno a varios campos; `dividir` reparte texto largo en varias líneas; `valores` traduce p. ej. SI/NO a radios).
 - Las claves del JSON que empiezan con `_` (p. ej. `_codigo`) se ignoran: son datos para el flujo de Power Automate.
-- Los textos que no caben en un campo de una línea reducen la letra (mín. 6 pt).
+- Los textos que no caben en un campo de una línea reducen la letra (mín. 6 pt). En los grupos `dividir` todas las líneas comparten el mismo tamaño.
+- `FUENTE_AUTO_AL_EDITAR` (True) deja los campos de texto con letra "Auto": lo ya escrito se ve con el tamaño calculado y, al editar en Reader, el texto se ajusta solo (Reader gratis no puede cambiar el tamaño de un campo).
 - Agregar una plantilla: copiar el PDF a `templates_pdf/`; no hace falta cambiar código.

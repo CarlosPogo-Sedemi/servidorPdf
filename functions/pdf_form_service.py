@@ -18,6 +18,9 @@ from PIL import Image
 from pypdf import PdfReader, PdfWriter, Transformation
 from pypdf.generic import ArrayObject, NameObject, TextStringObject
 
+# True: los campos quedan con letra "Auto" para que, al editarlos, el texto se ajuste solo.
+FUENTE_AUTO_AL_EDITAR = True
+
 DIRECTORIO_PLANTILLAS = Path(__file__).resolve().parent.parent / "templates_pdf"
 
 # Banderas (/Ff) del estándar PDF: el bit N vale 1 << (N - 1)
@@ -295,26 +298,40 @@ def _resolver_nombres(clave: str, campos: Dict[str, Dict[str, Any]]) -> Tuple[Op
     return None, "no_encontrado"
 
 
-def _dividir_texto(texto: str, infos: List[Dict[str, Any]]) -> Tuple[List[str], bool]:
-    """Reparte un texto largo entre varios campos de una línea (por palabras, midiendo el ancho
-    real de cada campo). Devuelve (líneas, desbordó): si no cabe, lo que sobra queda en la última."""
+def _envolver(texto: str, infos: List[Dict[str, Any]], tam: float) -> Tuple[List[str], bool]:
+    """Reparte las palabras en las líneas (campos) con letra de `tam` pt. Devuelve (líneas, sobra)."""
     lineas: List[str] = []
     actual = ""
     for palabra in texto.split():
         info = infos[min(len(lineas), len(infos) - 1)]
         limite = (info["ancho"] - 4) * 0.97
         candidato = f"{actual} {palabra}".strip()
-        if not actual or _ancho_texto(candidato, info["fuente"]) <= limite:
+        if not actual or _ancho_texto(candidato, tam) <= limite:
             actual = candidato
         else:
             lineas.append(actual)
             actual = palabra
     if actual:
         lineas.append(actual)
-    desbordo = len(lineas) > len(infos)
-    if desbordo:
+    sobra = len(lineas) > len(infos)
+    if sobra:  # no cabe: lo que sobra queda en la última línea
         lineas = lineas[:len(infos) - 1] + [" ".join(lineas[len(infos) - 1:])]
-    return lineas + [""] * (len(infos) - len(lineas)), desbordo
+    return lineas + [""] * (len(infos) - len(lineas)), sobra
+
+
+def _dividir_texto(texto: str, infos: List[Dict[str, Any]]) -> Tuple[List[str], float, bool]:
+    """Reparte un texto largo entre varios campos de una línea usando UN MISMO tamaño de letra
+    para todas: parte del tamaño del formulario y lo baja de 0.5 en 0.5 pt (mínimo 6) hasta que
+    todo quepa. Devuelve (líneas, tamaño, desbordó)."""
+    texto = " ".join(texto.split())
+    con_tilde = any(c.isupper() and len(unicodedata.normalize("NFD", c)) > 1 for c in texto)
+    por_alto = min((i["alto"] - 1.5) / (0.95 if con_tilde else 0.8) for i in infos)
+    tam = math.floor(min(min(i["fuente"] for i in infos), por_alto) * 2) / 2
+    while True:
+        lineas, sobra = _envolver(texto, infos, tam)
+        if not sobra or tam <= 6.0:
+            return lineas, tam, sobra
+        tam = max(6.0, tam - 0.5)
 
 
 def _expandir_alias(data: Dict[str, Any], alias: Dict[str, Any], campos: Dict[str, Dict[str, Any]]):
@@ -325,6 +342,7 @@ def _expandir_alias(data: Dict[str, Any], alias: Dict[str, Any], campos: Dict[st
                     "valores": {"SI": "0", "NO": "1"} (traduce el valor, p. ej. para radios)}"""
     elementos: List[Tuple[str, str, Any]] = []
     desbordados: List[str] = []
+    tamanos: Dict[str, float] = {}  # tamaño de letra común a las líneas de un grupo 'dividir'
     for clave, valor in (data or {}).items():
         if str(clave).startswith("_"):  # claves "_xxx": datos para el flujo (p. ej. _codigo), no son del PDF
             continue
@@ -340,13 +358,16 @@ def _expandir_alias(data: Dict[str, Any], alias: Dict[str, Any], campos: Dict[st
             llave = str(valor).upper() if isinstance(valor, bool) else _a_texto(valor).strip().upper()
             valor = valores.get(llave, valor)
         if spec.get("dividir") and len(destinos) > 1 and not _es_imagen(valor) and all(d in campos for d in destinos):
-            lineas, desbordo = _dividir_texto(_a_texto(valor).replace("\n", " "), [campos[d] for d in destinos])
+            infos = [campos[d] for d in destinos]
+            lineas, tam, desbordo = _dividir_texto(_a_texto(valor), infos)
             if desbordo:
                 desbordados.append(clave)
+            if any(abs(i["fuente"] - tam) > 1e-6 for i in infos):
+                tamanos.update({d: tam for d in destinos})
             elementos.extend((clave, d, linea) for d, linea in zip(destinos, lineas))
             continue
         elementos.extend((clave, d, valor) for d in destinos)
-    return elementos, desbordados
+    return elementos, desbordados, tamanos
 
 
 def _es_imagen(valor: Any) -> bool:
@@ -417,6 +438,21 @@ def _ajustar_fuentes(writer: PdfWriter, ajustes: Dict[str, float]) -> None:
                 )
 
 
+def _fuente_automatica(writer: PdfWriter, campos: Dict[str, Dict[str, Any]]) -> None:
+    """Pone la letra en 'Auto' (0 pt) en los campos de texto de una línea. La apariencia ya
+    generada se conserva; al EDITAR el campo (incluso en Reader gratis) el texto se ajusta solo."""
+    for pagina in writer.pages:
+        for ref in _anotaciones(pagina):
+            widget = ref.get_object()
+            if widget.get("/Subtype") != "/Widget":
+                continue
+            info = campos.get(_nombre_calificado(widget))
+            if not info or info["tipo"] != "texto" or info["multilinea"]:
+                continue
+            da = str(_heredado(widget, "/DA") or "/Helv 0 Tf 0 g")
+            widget[NameObject("/DA")] = TextStringObject(re.sub(r"[\d.]+(\s+Tf)", lambda m: "0" + m.group(1), da))
+
+
 def llenar_pdf(pdf_bytes: bytes, data: Dict[str, Any], alias: Optional[Dict[str, Any]] = None) -> Tuple[bytes, Dict[str, List[str]]]:
     """Rellena los campos del PDF con `data` ({nombre_campo: valor}) y devuelve
     (pdf_bytes, reporte). Los campos NO se aplanan: siguen siendo editables.
@@ -432,7 +468,7 @@ def llenar_pdf(pdf_bytes: bytes, data: Dict[str, Any], alias: Optional[Dict[str,
     valores: Dict[str, Any] = {}
     imagenes: Dict[str, str] = {}
 
-    elementos, reporte["desbordados"] = _expandir_alias(data, alias or {}, campos)
+    elementos, reporte["desbordados"], tamanos = _expandir_alias(data, alias or {}, campos)
 
     def marcar(lista: str, clave: str) -> None:
         if clave not in reporte[lista]:
@@ -480,6 +516,9 @@ def llenar_pdf(pdf_bytes: bytes, data: Dict[str, Any], alias: Optional[Dict[str,
     ajustes: Dict[str, float] = {}
     for nombre, texto in valores.items():
         info = campos[nombre]
+        if nombre in tamanos:
+            ajustes[nombre] = tamanos[nombre]
+            continue
         if info["tipo"] == "texto" and not info["multilinea"] and isinstance(texto, str) and texto:
             # la letra debe caber en alto (si hay mayúsculas con tilde, las tildes necesitan más) y en ancho
             con_tilde = any(c.isupper() and len(unicodedata.normalize("NFD", c)) > 1 for c in texto)
@@ -499,6 +538,9 @@ def llenar_pdf(pdf_bytes: bytes, data: Dict[str, Any], alias: Optional[Dict[str,
 
     for nombre, b64 in imagenes.items():
         _insertar_imagen(writer, nombre, b64)
+
+    if FUENTE_AUTO_AL_EDITAR:
+        _fuente_automatica(writer, campos)
 
     acro = writer._root_object["/AcroForm"]
     if "/XFA" in acro:  # Adobe ignora AcroForm si queda el XFA (LiveCycle): se elimina
