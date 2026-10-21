@@ -103,7 +103,7 @@ renderizado.
 ### Pipeline PDF (vacunas)
 
 `functions/vacunas_service.py` mantiene un `Environment` de Jinja2 a nivel de módulo apuntando a
-`templates_html/`. `construir_filas_vacuna()` aplana el modelo de dominio (primera dosis + una
+`templates_html/`. `construir_seccion_b()` aplana el modelo de dominio (primera dosis + una
 lista `ListaActividades` de dosis posteriores) en grupos de filas por vacuna que la plantilla
 itera. Las fechas se reformatean `-` → `/` aquí, no en la plantilla. Solo el `PacienteInfo` de
 `models/vacunas.py` está tipado; la lista `vacunas` es `Dict[str, Any]` sin tipar, así que el
@@ -154,3 +154,14 @@ No pasa por DOCX ni WeasyPrint (convertir a PDF destruye los campos). Usa `pypdf
 - Los textos que no caben en un campo de una línea reducen la letra (mín. 6 pt). En los grupos `dividir` todas las líneas comparten el mismo tamaño.
 - `FUENTE_AUTO_AL_EDITAR` (True) deja los campos de texto con letra "Auto": lo ya escrito se ve con el tamaño calculado y, al editar en Reader, el texto se ajusta solo (Reader gratis no puede cambiar el tamaño de un campo).
 - Agregar una plantilla: copiar el PDF a `templates_pdf/`; no hace falta cambiar código.
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+Rules:
+- When graphify-out/graph.json exists, run `graphify query "<question>"` before your first grep, search or source-file read for a codebase question, and put this rule in every subagent prompt that explores code. Read raw files only for lines the graph or an earlier read already located. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+- A committed graphify-out/graph.json is rewritten whole on every build, so a large diff to it in a pull request is expected. Do not flag it as churn or suggest skipping the graph rebuild or its hooks.
